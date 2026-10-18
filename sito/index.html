@@ -20,6 +20,23 @@ a{color:#0E5A4D}a:hover{color:#08362E}
 @media (max-width:900px){.g3,.g2,.hero{grid-template-columns:minmax(0,1fr)}.nav-links{gap:10px}.nav-links .hide-m{display:none}.h1{font-size:44px !important}}
 </style>
 
+<style>
+[hidden]{display:none !important}
+.acc-dlg{border:0;border-radius:20px;padding:0;width:min(420px,calc(100vw - 32px));box-shadow:0 30px 60px -20px rgba(16,35,31,.45);color:#10231F;background:#FFFFFF}
+.acc-dlg::backdrop{background:rgba(16,35,31,.45)}
+.acc-in{padding:28px;display:grid;gap:14px;font-family:'IBM Plex Sans',system-ui,sans-serif}
+.acc-in h2{font-family:'Bricolage Grotesque',sans-serif;font-size:26px;margin:0;letter-spacing:-.01em}
+.acc-in p{margin:0;color:#34463F;line-height:1.5}
+.acc-in label{display:grid;gap:6px;font-weight:600;font-size:14px}
+.acc-in input{font:inherit;font-size:17px;padding:13px 14px;border:1.5px solid #B9C7C1;border-radius:12px;background:#F7F9F7;color:#10231F}
+.acc-in input:focus{outline:2px solid #0E5A4D;outline-offset:1px;border-color:#0E5A4D}
+.acc-btn{font:inherit;font-weight:600;font-size:16px;border:0;border-radius:12px;padding:14px 18px;min-height:48px;background:#0E5A4D;color:#FFFFFF;cursor:pointer}
+.acc-btn[disabled]{opacity:.6;cursor:default}
+.acc-link{font:inherit;background:none;border:0;color:#0E5A4D;text-decoration:underline;cursor:pointer;padding:4px 0;justify-self:start}
+.acc-x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:0;background:#EEF2EF;font-size:22px;line-height:1;cursor:pointer;color:#10231F}
+.acc-err{color:#B3261E;font-size:14px;min-height:1em}
+.acc-small{font-size:14px;color:#55665F}
+</style>
 </head>
 <body>
 
@@ -37,7 +54,7 @@ a{color:#0E5A4D}a:hover{color:#08362E}
         <a class="hide-m" href="#cosa" style="color: #10231F; text-decoration: none">Cosa vedi</a>
         <a class="hide-m" href="#prezzo" style="color: #10231F; text-decoration: none">Prezzo</a>
         <a class="hide-m" href="#faq" style="color: #10231F; text-decoration: none">Domande</a>
-        <a href="app/#accedi" style="color: #10231F; text-decoration: none; padding: 12px 14px; border-radius: 10px; font-weight: 600; border: 1.5px solid #10231F; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Accedi</a>
+        <a href="app/#accedi" data-accedi style="color: #10231F; text-decoration: none; padding: 12px 14px; border-radius: 10px; font-weight: 600; border: 1.5px solid #10231F; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Accedi</a>
         <a href="app/" style="background: #10231F; color: #F3F5F2; text-decoration: none; padding: 12px 18px; border-radius: 10px; font-weight: 500; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Prova la demo</a>
       </nav>
     </div>
@@ -257,5 +274,76 @@ a{color:#0E5A4D}a:hover{color:#08362E}
   </footer>
 </div>
 
+
+<dialog class="acc-dlg" id="accDlg" aria-labelledby="accTitle">
+  <div class="acc-in" style="position:relative">
+    <button class="acc-x" type="button" id="accX" aria-label="Chiudi">×</button>
+    <div id="accStep1" style="display:grid;gap:14px">
+      <h2 id="accTitle">Accedi ad Avanzo</h2>
+      <p>Scrivi l'email che hai usato per l'acquisto: ti mandiamo un codice, nessuna password.</p>
+      <label for="accEmail">Email<input id="accEmail" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></label>
+      <button class="acc-btn" type="button" id="accSend">Inviami il codice</button>
+    </div>
+    <div id="accStep2" hidden style="display:grid;gap:14px">
+      <h2>Controlla l'email</h2>
+      <p>Abbiamo scritto a <b id="accTo"></b>. Inserisci qui il codice di 6 cifre, oppure tocca il link nell'email.</p>
+      <label for="accCode">Codice<input id="accCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></label>
+      <button class="acc-btn" type="button" id="accVerify">Entra</button>
+      <button class="acc-link" type="button" id="accBack">Cambia email</button>
+    </div>
+    <div id="accStep3" hidden style="display:grid;gap:14px">
+      <h2>Sei già dentro</h2>
+      <p>Hai già fatto l'accesso su questo dispositivo.</p>
+      <a class="acc-btn" href="app/" style="text-align:center;text-decoration:none">Apri la tua dashboard</a>
+    </div>
+    <p class="acc-err" id="accErr" role="alert"></p>
+    <p class="acc-small">Non hai ancora Avanzo? <a href="#prezzo" id="accPrezzi" style="color:#0E5A4D">Guarda i piani</a></p>
+  </div>
+</dialog>
+<script src="app/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+  const C = window.AVANZO_CONFIG || {};
+  const SB = C.supabaseUrl && window.supabase ? window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'avanzo.auth' } }) : null;
+  const $ = (id) => document.getElementById(id);
+  const dlg = $('accDlg'); let email = '';
+  const step = (n) => { [1, 2, 3].forEach((i) => { $('accStep' + i).hidden = i !== n; }); $('accErr').textContent = ''; };
+  const err = (m) => { $('accErr').textContent = m; };
+  const vaiApp = () => { location.href = 'app/'; };
+  async function apri(e) {
+    if (!SB || !dlg.showModal) return; // senza popup si va alla pagina dell'app
+    e.preventDefault();
+    let sess = null; try { sess = (await SB.auth.getSession()).data.session; } catch (er) {}
+    step(sess ? 3 : (email ? 2 : 1)); dlg.showModal();
+    setTimeout(() => { const f = sess ? null : $(email ? 'accCode' : 'accEmail'); if (f) f.focus(); }, 50);
+  }
+  document.querySelectorAll('[data-accedi]').forEach((a) => a.addEventListener('click', apri));
+  $('accX').onclick = () => dlg.close();
+  $('accPrezzi').onclick = () => dlg.close();
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  $('accEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('accSend').click(); });
+  $('accCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('accVerify').click(); });
+  $('accSend').onclick = async () => {
+    const v = $('accEmail').value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return err('Scrivi un indirizzo email valido.');
+    const b = $('accSend'); b.disabled = true; err('');
+    const { error } = await SB.auth.signInWithOtp({ email: v, options: { shouldCreateUser: true, emailRedirectTo: location.origin + '/app/' } });
+    b.disabled = false;
+    if (error) return err(error.status === 429 || /rate|limit|seconds/i.test(error.message || '') ? "Hai chiesto troppi codici in poco tempo. Usa l'ultima email ricevuta, oppure riprova tra un po'." : "Non siamo riusciti a inviare l'email. Controlla l'indirizzo e riprova.");
+    email = v; $('accTo').textContent = v; step(2); $('accCode').focus();
+  };
+  $('accVerify').onclick = async () => {
+    const t = $('accCode').value.replace(/\D/g, '');
+    if (t.length < 6) return err("Il codice ha 6 cifre: controlla l'email.");
+    const b = $('accVerify'); b.disabled = true; err('');
+    const { data, error } = await SB.auth.verifyOtp({ email, token: t, type: 'email' });
+    b.disabled = false;
+    if (error || !data.user) return err('Codice non valido o scaduto. Chiedine uno nuovo.');
+    vaiApp();
+  };
+  $('accBack').onclick = () => { email = ''; step(1); $('accEmail').focus(); };
+})();
+</script>
 </body>
 </html>

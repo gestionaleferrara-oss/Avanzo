@@ -51,6 +51,10 @@ button { cursor: pointer; }
 .who { color: var(--muted); font-size: 14px; }
 .demo-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--sun-soft); border-radius: var(--r); padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
 .demo-bar b { font-weight: 600; }
+.login-dlg { border: 0; border-radius: 20px; padding: 0; width: min(440px, calc(100vw - 32px)); background: var(--panel); color: var(--ink); box-shadow: 0 30px 60px -20px rgba(0,0,0,.45); }
+.login-dlg::backdrop { background: rgba(16,35,31,.45); }
+.login-dlg .card { border: 0; margin: 0 !important; padding: 26px; }
+.login-x { position: absolute; top: 10px; right: 10px; z-index: 1; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--soft); color: var(--ink); font-size: 22px; cursor: pointer; }
 .seg { display: inline-flex; background: var(--line); border-radius: 999px; padding: 3px; margin-bottom: 14px; }
 .seg button { border: 0; background: transparent; font: inherit; font-weight: 600; padding: 8px 18px; border-radius: 999px; cursor: pointer; color: inherit; min-height: 40px; }
 .seg button.on { background: var(--panel); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
@@ -187,6 +191,7 @@ span.cchip { min-height: 0; padding: 3px 10px; font-size: 12px; line-height: 1.4
   <section class="hero" id="hero"></section>
   <nav class="tabs" role="tablist" aria-label="Sezioni" id="tabs"></nav>
   <main id="view"></main>
+  <dialog class="login-dlg" id="loginDlg" aria-label="Accedi"><button class="login-x" type="button" id="loginX" aria-label="Chiudi">×</button><div id="loginBody"></div></dialog>
   <p class="hint" style="margin-top:32px">Avanzo è un'app indipendente. Le informazioni hanno scopo organizzativo e non sono consulenza finanziaria.</p>
 </div>
 <button class="fab" id="fab" aria-label="Nuova transazione"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg><span>Nuova transazione</span></button>
@@ -816,7 +821,7 @@ const MS = (() => {
 
   V.impostazioni = (C) => {
     const I = S.impostazioni;
-    const acc = V.account ? V.account() : ''; const base = NATIVE ? `${SCHEME}://` : location.href.split('#')[0].split('?')[0] + '#';
+    const acc = V.account && !UI.dlg ? V.account() : ''; const base = NATIVE ? `${SCHEME}://` : location.href.split('#')[0].split('?')[0] + '#';
     const tpl = `${base}nuova?importo=[Importo]&descrizione=[Esercente]&conto=[Carta]&fonte=iphone&salva=1`;
     const tplA = `${base}nuova?titolo={not_title}&testo={notification}&fonte=android&salva=1`;
     const ultimoTel = S.movimenti.filter((m) => ['iphone', 'android', 'telefono'].includes(m.fonte)).sort((x, y) => (y.data + (y.id || '')).localeCompare(x.data + (x.id || '')))[0];
@@ -892,7 +897,15 @@ const MS = (() => {
     renderHead(C);
     $('view').innerHTML = V[UI.tab](C);
     after[UI.tab] && after[UI.tab](C);
+    if (UI.dlg) riempiLogin();
   }
+  function riempiLogin() {
+    if (Sync.user) { chiudiLogin(); return; }
+    const was = document.activeElement && document.activeElement.id;
+    $('loginBody').innerHTML = V.account(); after.account();
+    const f = $('loginBody').querySelector('#acCode') || (was === 'acEmail' ? $('loginBody').querySelector('#acEmail') : null); if (f && document.activeElement !== f) f.focus();
+  }
+  function chiudiLogin() { if (!UI.dlg) return; UI.dlg = false; try { $('loginDlg').close(); } catch (e) {} render(); }
   const after = {};
   after.stipendio = (C) => lineChart($('chPrev'), C.prev.map((p) => p.data), [{ name: 'Come al solito', values: C.prev.map((p) => p.solito), color: 'var(--s1)' }, { name: 'Solo essenziale', values: C.prev.map((p) => p.essenziale), color: 'var(--s2)', dash: '6 5' }], { xl: ds, tl: dl, aria: 'Saldo previsto fino allo stipendio' });
   after.budget = () => { $('goCat').onclick = () => goTo('impostazioni', 'catCard'); };
@@ -1015,8 +1028,10 @@ const MS = (() => {
     return true;
   }
   function apriAccesso() {
-    goTo('impostazioni', 'accountCard');
-    setTimeout(() => { const f = document.getElementById('acEmail'); if (f) f.focus(); }, 350);
+    const d = $('loginDlg');
+    if (!d.showModal || !SB) { goTo('impostazioni', 'accountCard'); return; }
+    UI.dlg = true; render(); if (!d.open) d.showModal();
+    setTimeout(() => { const f = d.querySelector('#acEmail, #acCode'); if (f) f.focus(); }, 60);
   }
   function fromUrl() {
     const href = location.href;
@@ -1123,7 +1138,7 @@ const MS = (() => {
       <p style="margin:0 0 12px">Con il prezzo fondatore hai Avanzo Plus per sempre con un solo pagamento: <b>49,99 €</b> invece di 69,99 €. Al pagamento usa questa stessa email.</p>
       <div class="controls" style="margin:0">${paga ? `<a class="btn" href="${esc(paga)}" target="_blank" rel="noopener">Diventa fondatore – 49,99 €</a>` : ''}<button class="btn ghost" id="acCheck">Ho già pagato, ricontrolla</button></div>
       <p class="hint" id="acErr" role="alert"></p></div>`;
-    return `<div class="card" id="accountCard" style="margin-bottom:14px"><h2>Account</h2><p class="note">Entra con la tua email per usare Avanzo con i tuoi conti, su tutti i tuoi dispositivi. Serve Plus. Ti mandiamo un codice, nessuna password.</p>
+    return `<div class="card" id="accountCard" style="margin-bottom:14px"><h2>Accedi ad Avanzo</h2><p class="note">Entra con la tua email per usare Avanzo con i tuoi conti, su tutti i tuoi dispositivi. Serve Plus. Ti mandiamo un codice, nessuna password.</p>
       <div class="controls" style="margin:0">${Sync.emailInviata
         ? `<p class="note" style="flex:1 1 100%;margin:0">Ti abbiamo scritto a <b>${esc(Sync.emailInviata)}</b>: tocca il link nell'email oppure scrivi qui il codice, se c'è.</p><label class="f" for="acCode">Codice<input id="acCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></label><button class="btn" id="acVerify">Accedi</button><button class="btn ghost" id="acBack">Cambia email</button>`
         : `<label class="f" for="acEmail" style="flex:2 1 14rem">Email<input id="acEmail" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></label><button class="btn" id="acSend">Inviami il codice</button>`}</div>
@@ -1171,9 +1186,13 @@ const MS = (() => {
   /* ---------- avvio ---------- */
   $('tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (!b) return; UI.tab = b.dataset.tab; try { localStorage.setItem(KEY + '.tab', UI.tab); } catch (er) {} render(); });
   $('loginBtn').onclick = apriAccesso;
+  $('loginX').onclick = chiudiLogin;
+  $('loginDlg').addEventListener('close', () => { if (UI.dlg) { UI.dlg = false; render(); } });
+  $('loginDlg').addEventListener('click', (e) => { if (e.target === $('loginDlg')) chiudiLogin(); });
   $('startOwn').onclick = () => {
     if (!SB || Sync.plus) { S = vuoto(); save(); UI.tab = 'impostazioni'; render(); toast('Inizia da profilo, conti e scadenze. Poi aggiungi le transazioni con il tasto +.'); return; }
-    goTo('impostazioni', 'accountCard'); toast(Sync.user ? 'Attiva Plus per usare i tuoi conti.' : 'Entra con la tua email: con Plus usi Avanzo con i tuoi conti.');
+    if (!Sync.user) { apriAccesso(); return; }
+    goTo('impostazioni', 'accountCard'); toast('Attiva Plus per usare i tuoi conti.');
   };
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 150); });
   if (!TABS.some(([id]) => id === UI.tab)) UI.tab = 'panoramica';
