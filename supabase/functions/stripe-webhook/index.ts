@@ -69,6 +69,7 @@ Deno.serve(async (req) => {
         stripe_customer: s.customer ?? null,
         importo: s.amount_total ?? null,
         valuta: s.currency ?? null,
+        ref: typeof s.client_reference_id === "string" ? s.client_reference_id.slice(0, 40) : null,
       }),
     });
     if (!r.ok) return risposta(500, { errore: "salvataggio non riuscito", dettaglio: await r.text() });

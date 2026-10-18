@@ -1063,7 +1063,13 @@ const MS = (() => {
     return Sync.plus;
   }
   function pianoRicordato() { try { const c = JSON.parse(localStorage.getItem(KEY + '.piano') || 'null'); if (c && c.u === Sync.user.id && c.p) { Sync.piano = c.p; Sync.plus = true; } } catch (e) {} }
-  const linkPagamento = () => CFG.pagamentoFondatore ? CFG.pagamentoFondatore + (Sync.user && Sync.user.email ? '?prefilled_email=' + encodeURIComponent(Sync.user.email) : '') : '';
+  const linkPagamento = () => {
+    if (!CFG.pagamentoFondatore) return '';
+    const u = new URL(CFG.pagamentoFondatore);
+    if (Sync.user && Sync.user.email) u.searchParams.set('prefilled_email', Sync.user.email);
+    try { const r = JSON.parse(localStorage.getItem('avanzo.ref') || 'null'); if (r && r.r && Date.now() - r.t < 30 * 864e5) u.searchParams.set('client_reference_id', r.r); } catch (e) {}
+    return u.toString();
+  };
   const statoTesto = () => Sync.stato === 'ok' ? `Sincronizzato alle ${new Date(Sync.ultimo).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}` : Sync.stato === 'invio' ? 'Sincronizzazione in corso…' : Sync.stato === 'errore' ? 'Non sincronizzato: riprovo appena possibile' : Sync.stato === 'offline' ? 'Offline: sincronizzo appena torna la rete' : '';
   function mostraStato() {
     const el = document.getElementById('syncStato'); if (el) el.textContent = statoTesto();
