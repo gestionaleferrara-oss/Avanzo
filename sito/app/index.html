@@ -1057,7 +1057,11 @@ const MS = (() => {
       send.disabled = true; err('');
       const { error } = await SB.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
       send.disabled = false;
-      if (error) return err('Non siamo riusciti a inviare il codice. Riprova tra un minuto.');
+      if (error) {
+        const lim = error.status === 429 || /rate|limit|seconds/i.test(error.message || '');
+        console.warn('otp', error);
+        return err(lim ? 'Hai chiesto troppi codici in poco tempo. Usa l\'ultima email ricevuta, oppure riprova tra un\'ora.' : 'Non siamo riusciti a inviare l\'email. Controlla l\'indirizzo e riprova.');
+      }
       Sync.emailInviata = email; render();
     };
     const ver = document.getElementById('acVerify');
