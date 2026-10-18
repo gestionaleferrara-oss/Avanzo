@@ -2,6 +2,6 @@
 // Questi due valori sono pubblici per natura: la protezione dei dati
 // la fanno le regole di accesso del database (supabase/schema.sql).
 window.AVANZO_CONFIG = {
-  supabaseUrl: '',      // es. https://abcdefghijkl.supabase.co
+  supabaseUrl: 'https://toseujvuvalxoelmmows.supabase.co',
   supabaseAnonKey: '',  // Project Settings › API › "anon public"
 };

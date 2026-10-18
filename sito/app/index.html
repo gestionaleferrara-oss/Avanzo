@@ -1042,7 +1042,7 @@ const MS = (() => {
     if (Sync.user) return `<div class="card" style="margin-bottom:14px"><div class="card-head"><h2>Account</h2><button class="btn ghost small" id="acOut">Esci</button></div><p class="note" style="margin:0">Collegato come <b>${esc(Sync.user.email || '')}</b> · <span id="syncStato">${esc(statoTesto())}</span></p></div>`;
     return `<div class="card" style="margin-bottom:14px"><h2>Account</h2><p class="note">Accedi per salvare i dati in modo sicuro e usarli su più dispositivi. Ti mandiamo un codice via email, nessuna password.</p>
       <div class="controls" style="margin:0">${Sync.emailInviata
-        ? `<label class="f" for="acCode">Codice ricevuto a ${esc(Sync.emailInviata)}<input id="acCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></label><button class="btn" id="acVerify">Accedi</button><button class="btn ghost" id="acBack">Cambia email</button>`
+        ? `<p class="note" style="flex:1 1 100%;margin:0">Ti abbiamo scritto a <b>${esc(Sync.emailInviata)}</b>: tocca il link nell'email oppure scrivi qui il codice, se c'è.</p><label class="f" for="acCode">Codice<input id="acCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></label><button class="btn" id="acVerify">Accedi</button><button class="btn ghost" id="acBack">Cambia email</button>`
         : `<label class="f" for="acEmail" style="flex:2 1 14rem">Email<input id="acEmail" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></label><button class="btn" id="acSend">Inviami il codice</button>`}</div>
       <p class="hint" id="acErr" role="alert"></p></div>`;
   };
@@ -1055,7 +1055,7 @@ const MS = (() => {
       const email = $('acEmail').value.trim().toLowerCase();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err('Scrivi un indirizzo email valido.');
       send.disabled = true; err('');
-      const { error } = await SB.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+      const { error } = await SB.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
       send.disabled = false;
       if (error) return err('Non siamo riusciti a inviare il codice. Riprova tra un minuto.');
       Sync.emailInviata = email; render();
@@ -1084,7 +1084,7 @@ const MS = (() => {
     }
     saveLocal(); render(); fromUrl();
     if (SB) {
-      SB.auth.onAuthStateChange((ev, session) => { if (ev === 'SIGNED_OUT') { Sync.user = null; mostraStato(); } });
+      SB.auth.onAuthStateChange((ev, session) => { if (ev === 'SIGNED_OUT') { Sync.user = null; mostraStato(); } else if (ev === 'SIGNED_IN' && session && session.user && (!Sync.user || Sync.user.id !== session.user.id)) { Sync.emailInviata = ''; setTimeout(() => { if (Sync.user && Sync.user.id === session.user.id) return; accesso(session.user).then(() => toast('Accesso fatto: i tuoi dati ora sono salvati nel tuo account.')); }, 0); } });
       try { const { data } = await SB.auth.getSession(); if (data && data.session && data.session.user) await accesso(data.session.user); } catch (e) {}
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') aggiorna(); });
       addEventListener('online', () => programma());
