@@ -608,12 +608,6 @@ const MS = (() => {
   };
 
   V.budget = (C) => `
-    <div class="tiles">
-      <div class="card tile"><div class="lbl">Puoi spendere davvero</div><div class="big ${C.spendibile < 0 ? 'bad' : 'ok'}">${esc(eur(C.spendibile))}</div><div class="sub">Fino allo stipendio, per le spese a scelta</div></div>
-      <div class="card tile"><div class="lbl">Al giorno, al massimo</div><div class="big">${esc(eur(Math.max(0, C.spendibile) / C.giorni))}</div><div class="sub">Di solito ${esc(eur(C.desDay))} al giorno</div></div>
-      <div class="card tile"><div class="lbl">Deve uscire per forza</div><div class="big warn">${esc(eur(C.totDaPagare))}</div><div class="sub">Scadenze prima dello stipendio</div></div>
-      <div class="card tile"><div class="lbl">Spese necessarie previste</div><div class="big">${esc(eur(C.essPrev))}</div><div class="sub">${esc(C.spieg.necessarie.slice(0, 3).map((c) => c.nome).join(', ') || 'Nessuna categoria necessaria')}${C.spieg.necessarie.length > 3 ? '…' : ''}</div></div>
-    </div>
     ${V.come(C)}
     <div class="card" style="margin-bottom:14px"><h2>Budget del mese</h2><p class="note">La linea verticale è "oggi": se la barra la supera, stai spendendo troppo in fretta</p>
       ${C.budget.length ? `<div class="grid" style="margin:0">${C.budget.map((b) => { const over = b.pct > 100, fast = b.pct > C.pctOggi; return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px 14px"><div class="row" style="border:0;padding:0"><b>${esc(b.nome)}</b><span class="num">${esc(eur0(b.speso))} / ${esc(eur0(b.limite))}</span></div>${b.categorie.length > 1 || b.categorie[0] !== b.nome ? `<div class="note" style="margin:0">${esc(b.categorie.join(', '))}</div>` : ''}<div class="track"><div class="fill ${over ? 'bad' : fast ? 'warn' : ''}" style="width:${Math.min(100, b.pct)}%"></div><div class="today" style="left:${C.pctOggi}%"></div></div><div class="note ${over ? 'bad' : fast ? 'warn' : ''}" style="margin:0">${over ? `Superato di ${esc(eur(b.speso - b.limite))}` : fast ? `Troppo in fretta · restano ${esc(eur(b.limite - b.speso))}` : `In linea · restano ${esc(eur(b.limite - b.speso))}`}</div></div>`; }).join('')}</div>` : '<p class="empty">Nessun budget: crealo in Impostazioni o applica il piano da Ottimizzazione.</p>'}
@@ -624,20 +618,16 @@ const MS = (() => {
     </div>`;
 
   V.come = (C) => {
-    const S2 = C.spieg; const nScad = C.daPagare.length;
-    const chipList = (xs, withM) => xs.length ? `<div class="chips">${xs.map((c) => `<span class="cchip">${esc(c.nome)}${withM && c.media > 0 ? `<span class="m">${esc(eur0(c.media))}/mese</span>` : ''}</span>`).join('')}</div>` : '<span class="note">nessuna</span>';
-    return `<div class="card" id="come" style="margin-bottom:14px"><h2>Come calcoliamo quanto puoi spendere</h2><p class="note">Dalla liquidità di oggi togliamo quello che deve uscire per forza fino allo stipendio del ${esc(dl(C.pay))}</p>
+    const nec = C.spieg.necessarie.map((c) => c.nome);
+    return `<div class="card" id="come" style="margin-bottom:14px"><h2>Come si calcola</h2>
       <div class="calc">
-        <div class="row"><span>Liquidità oggi<br><span class="sub">conti, carte e contanti, esclusi i risparmi</span></span><b class="num">${esc(eur(C.liquidita))}</b></div>
-        <div class="row"><span>− Scadenze prima dello stipendio<br><span class="sub">${nScad ? esc(C.daPagare.map((x) => x.nome).join(', ')) : 'nessuna'}</span></span><b class="num">−${esc(eur(C.totDaPagare))}</b></div>
-        <div class="row"><span>− Spese necessarie previste<br><span class="sub">${esc(eur(C.necDay))} al giorno in media × ${C.giorni} ${C.giorni === 1 ? 'giorno' : 'giorni'}</span></span><b class="num">−${esc(eur(C.essPrev))}</b></div>
-        <div class="row tot"><span>= Puoi spendere per le spese a scelta</span><b class="num ${C.spendibile < 0 ? 'bad' : 'ok'}">${esc(eur(C.spendibile))}</b></div>
+        <div class="row"><span>Liquidità oggi</span><b class="num">${esc(eur0(C.liquidita))}</b></div>
+        <div class="row"><span>− Scadenze fino al ${esc(ds(C.pay))}</span><b class="num">${esc(eur0(C.totDaPagare))}</b></div>
+        <div class="row"><span>− Spese necessarie</span><b class="num">${esc(eur0(C.essPrev))}</b></div>
+        <div class="row tot"><span>= Puoi spendere</span><b class="num ${C.spendibile < 0 ? 'bad' : 'ok'}">${esc(eur0(C.spendibile))}</b></div>
       </div>
-      <div class="grp"><div class="grp-h"><b>Necessarie</b> · la loro media viene tolta prima, come spese che farai comunque</div>${chipList(S2.necessarie, true)}</div>
-      <div class="grp"><div class="grp-h"><b>A scelta</b> · si pagano con la cifra che "puoi spendere"</div>${chipList(S2.aScelta, true)}</div>
-      <div class="grp"><div class="grp-h"><b>Fisse</b> · contano solo tramite le scadenze del mese</div>${chipList(S2.fisse.map((c) => ({ nome: c.nome + (c.scadenza ? '' : ' (senza scadenza)'), media: 0 })), false)}</div>
-      ${S2.fisseSenzaScadenza.length ? `<p class="note warn" style="margin:10px 0 0">${esc(S2.fisseSenzaScadenza.map((c) => c.nome).join(', '))}: ${S2.fisseSenzaScadenza.length === 1 ? 'è una spesa fissa senza scadenza e non viene tolta' : 'sono spese fisse senza scadenza e non vengono tolte'}. Aggiungi la scadenza in Impostazioni.</p>` : ''}
-      <div style="margin-top:14px"><button class="btn ghost small" id="goCat">Cambia quali spese sono necessarie</button></div>
+      <p class="note" style="margin:8px 0 0">Necessarie: ${esc(nec.join(', ') || 'nessuna')}. <button class="hlink" id="goCat" style="font-size:12px;padding:0;min-height:0">Cambia</button></p>
+      ${C.spieg.fisseSenzaScadenza.length ? `<p class="note warn" style="margin:4px 0 0">${esc(C.spieg.fisseSenzaScadenza.map((c) => c.nome).join(', '))}: manca la scadenza, quindi non viene tolta.</p>` : ''}
     </div>`;
   };
 
