@@ -54,7 +54,7 @@ a{color:#0E5A4D}a:hover{color:#08362E}
         <a class="hide-m" href="#cosa" style="color: #10231F; text-decoration: none">Cosa vedi</a>
         <a class="hide-m" href="#prezzo" style="color: #10231F; text-decoration: none">Prezzo</a>
         <a class="hide-m" href="#faq" style="color: #10231F; text-decoration: none">Domande</a>
-        <a href="app/#accedi" data-accedi style="color: #10231F; text-decoration: none; padding: 12px 14px; border-radius: 10px; font-weight: 600; border: 1.5px solid #10231F; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Accedi</a>
+        <a href="#accedi" data-accedi style="color: #10231F; text-decoration: none; padding: 12px 14px; border-radius: 10px; font-weight: 600; border: 1.5px solid #10231F; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Accedi</a>
         <a href="app/" style="background: #10231F; color: #F3F5F2; text-decoration: none; padding: 12px 18px; border-radius: 10px; font-weight: 500; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Prova la demo</a>
       </nav>
     </div>
@@ -312,13 +312,16 @@ a{color:#0E5A4D}a:hover{color:#08362E}
   const err = (m) => { $('accErr').textContent = m; };
   const vaiApp = () => { location.href = 'app/'; };
   async function apri(e) {
-    if (!SB || !dlg.showModal) return; // senza popup si va alla pagina dell'app
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (!dlg.showModal) { location.href = 'app/#accedi'; return; }
+    if (!SB) { step(1); dlg.showModal(); err('Accesso non disponibile in questo momento: ricarica la pagina.'); return; }
     let sess = null; try { sess = (await SB.auth.getSession()).data.session; } catch (er) {}
     step(sess ? 3 : (email ? 2 : 1)); dlg.showModal();
     setTimeout(() => { const f = sess ? null : $(email ? 'accCode' : 'accEmail'); if (f) f.focus(); }, 50);
   }
   document.querySelectorAll('[data-accedi]').forEach((a) => a.addEventListener('click', apri));
+  const daHash = () => { if (location.hash === '#accedi') { history.replaceState(null, '', location.pathname + location.search); apri(); } };
+  addEventListener('hashchange', daHash); daHash();
   $('accX').onclick = () => dlg.close();
   $('accPrezzi').onclick = () => dlg.close();
   dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
