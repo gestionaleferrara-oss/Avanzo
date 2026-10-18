@@ -182,6 +182,8 @@ span.cchip { min-height: 0; padding: 3px 10px; font-size: 12px; line-height: 1.4
 <div id="modal"></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 /* ================= LOGICA PURA (nessun DOM) ================= */
 const MS = (() => {
@@ -246,7 +248,7 @@ const MS = (() => {
     const conti = [['cc', 'Conto corrente', 'banca'], ['cp', 'Carta prepagata', 'carta'], ['ct', 'Contanti', 'contanti'], ['cd', 'Conto deposito', 'risparmio']].map(([id, nome, tipo]) => ({ id, nome, tipo, saldoIniziale: round2(target[id] - mov.filter((m) => m.conto === id).reduce((s, m) => s + m.importo, 0)) }));
     const last = (mm) => { const x = addMonths(T, mm); return ym(x); };
     return {
-      v: 1, demo: true,
+      v: 1, demo: true, base: Date.now(),
       impostazioni: { nome: 'Chiara Rinaldi', giornoStipendio: 27, stipendio: 1950, obiettivoRisparmio: 120, fondoObiettivo: 4800, contoFondo: 'cd', quotaFondo: 100, contoPredefinito: 'cp' },
       conti, categorie: CATEGORIE.map((c) => ({ ...c })), movimenti: mov,
       scadenze: fixed.map(([nome, categoria, giorno, importo]) => ({ id: uid(), nome, categoria, giorno, importo: importo || 78.4 })),
@@ -262,11 +264,32 @@ const MS = (() => {
     if (S.budget && !Array.isArray(S.budget)) S.budget = Object.entries(S.budget).filter(([, l]) => Number(l) > 0).map(([c, l]) => ({ id: uid(), nome: c, limite: Number(l), categorie: [c] }));
     if (!S.budget) S.budget = [];
     if (!S.regole) S.regole = {}; if (!S.importati) S.importati = [];
+    if (!S.eliminati) S.eliminati = []; if (!S.base) S.base = 1;
     return S;
   }
 
+  /* Unisce i dati di due dispositivi.
+     - Se uno dei due è stato azzerato più di recente (base diversa), vince quello.
+     - I movimenti si uniscono per id; tra due versioni dello stesso vince la più recente; gli eliminati restano eliminati.
+     - Impostazioni, conti, categorie, scadenze, debiti e budget arrivano dal lato modificato per ultimo. */
+  function unisci(a, b) {
+    a = migra(JSON.parse(JSON.stringify(a))); b = migra(JSON.parse(JSON.stringify(b)));
+    if (a.base !== b.base) return a.base > b.base ? a : b;
+    const recente = (a.mod || 0) >= (b.mod || 0) ? a : b;
+    const out = JSON.parse(JSON.stringify(recente));
+    const tomb = new Set([...a.eliminati, ...b.eliminati]);
+    const per = new Map();
+    [...b.movimenti, ...a.movimenti].forEach((m) => { const o = per.get(m.id); if (!o || (m.mod || 0) >= (o.mod || 0)) per.set(m.id, m); });
+    out.movimenti = [...per.values()].filter((m) => !tomb.has(m.id)).sort((x, y) => x.data < y.data ? -1 : x.data > y.data ? 1 : 0);
+    out.eliminati = [...tomb].slice(-3000);
+    out.importati = [...new Set([...a.importati, ...b.importati])].slice(-300);
+    out.regole = { ...(recente === a ? b : a).regole, ...recente.regole };
+    out.mod = Math.max(a.mod || 0, b.mod || 0);
+    return out;
+  }
+
   function vuoto() {
-    return { v: 1, demo: false, impostazioni: { nome: '', giornoStipendio: 27, stipendio: 0, obiettivoRisparmio: 100, fondoObiettivo: 3000, contoFondo: '', quotaFondo: 0, contoPredefinito: 'cc' }, conti: [{ id: 'cc', nome: 'Conto corrente', tipo: 'banca', saldoIniziale: 0 }], categorie: CATEGORIE.map((c) => ({ ...c })), movimenti: [], scadenze: [], debiti: [], budget: [], regole: {}, importati: [] };
+    return { v: 1, demo: false, base: Date.now(), impostazioni: { nome: '', giornoStipendio: 27, stipendio: 0, obiettivoRisparmio: 100, fondoObiettivo: 3000, contoFondo: '', quotaFondo: 0, contoPredefinito: 'cc' }, conti: [{ id: 'cc', nome: 'Conto corrente', tipo: 'banca', saldoIniziale: 0 }], categorie: CATEGORIE.map((c) => ({ ...c })), movimenti: [], scadenze: [], debiti: [], budget: [], regole: {}, importati: [] };
   }
 
   /* Calcoli: tutto deriva dai movimenti */
@@ -455,7 +478,7 @@ const MS = (() => {
     return { id: uid(), data, importo: L.entrata ? L.importo : -L.importo, categoria, descrizione: L.descrizione, conto: conto ? conto.id : '', fonte: L.fonte };
   }
 
-  return { iso, pd, ym, addDays, addMonths, uid, round2, demo, vuoto, migra, calc, eur, eur0, dl, ds, ml, ms, parseImporto, parseLink, nuovaDaLink, CATEGORIE };
+  return { iso, pd, ym, addDays, addMonths, uid, round2, demo, vuoto, migra, unisci, calc, eur, eur0, dl, ds, ml, ms, parseImporto, parseLink, nuovaDaLink, CATEGORIE };
 })();
 /* ================= FINE LOGICA PURA ================= */
 </script>
@@ -463,7 +486,7 @@ const MS = (() => {
 <script>
 /* ================= INTERFACCIA ================= */
 (() => {
-  const { iso, pd, uid, round2, demo, vuoto, migra, calc, eur, eur0, dl, ds, ml, ms, parseLink, nuovaDaLink, parseImporto } = MS;
+  const { iso, pd, uid, round2, demo, vuoto, migra, unisci, calc, eur, eur0, dl, ds, ml, ms, parseLink, nuovaDaLink, parseImporto } = MS;
   const KEY = 'avanzo.v1';
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = (id) => document.getElementById(id);
@@ -476,11 +499,13 @@ const MS = (() => {
   try { S = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { S = null; }
   if (!S || !S.v) S = demo(today());
   S = migra(S);
-  const save = () => {
+  const saveLocal = () => {
     const txt = JSON.stringify(S);
     try { localStorage.setItem(KEY, txt); } catch (e) { /* memoria non disponibile */ }
     if (Pref) Pref.set({ key: KEY, value: txt }).catch(() => {});
   };
+  const save = () => { S.mod = Date.now(); saveLocal(); if (window.AvanzoSync) window.AvanzoSync.programma(); };
+  const segnaEliminati = (ids) => { S.eliminati = [...(S.eliminati || []), ...ids].slice(-3000); };
 
   const UI = { tab: 'panoramica', goal: null, sim: { mode: 'quota' }, filtri: { q: '', conto: '', cat: '', tipo: '' } };
   try { UI.tab = localStorage.getItem(KEY + '.tab') || 'panoramica'; } catch (e) {}
@@ -564,6 +589,7 @@ const MS = (() => {
   /* ---------- testata ---------- */
   function renderHead(C) {
     $('who').textContent = S.impostazioni.nome ? S.impostazioni.nome : '';
+    if (typeof mostraStato === 'function' && Sync.user) mostraStato();
     $('demoBar').hidden = !S.demo;
     const sera = C.prev[C.prev.length - 2] || C.prev[0];
     $('hero').innerHTML = `
@@ -761,12 +787,13 @@ const MS = (() => {
   }
 
   V.impostazioni = (C) => {
-    const I = S.impostazioni; const base = NATIVE ? `${SCHEME}://` : location.href.split('#')[0].split('?')[0] + '#';
+    const I = S.impostazioni;
+    const acc = V.account ? V.account() : ''; const base = NATIVE ? `${SCHEME}://` : location.href.split('#')[0].split('?')[0] + '#';
     const tpl = `${base}nuova?importo=[Importo]&descrizione=[Esercente]&conto=[Carta]&fonte=iphone&salva=1`;
     const tplA = `${base}nuova?importo=%importo&descrizione=%esercente&fonte=android&salva=1`;
     const catOpts = (sel) => S.categorie.filter((c) => c.natura !== 'trasferimento').map((c) => `<option ${c.nome === sel ? 'selected' : ''}>${esc(c.nome)}</option>`).join('');
     const contoOpts = (sel, any) => (any ? '<option value="">—</option>' : '') + S.conti.map((c) => `<option value="${esc(c.id)}" ${c.id === sel ? 'selected' : ''}>${esc(c.nome)}</option>`).join('');
-    return `
+    return `${acc}
     <div class="grid">
       <div class="card"><h2>Profilo e obiettivi</h2><p class="note">Da qui partono tutti i calcoli</p>
         <div class="form">
@@ -860,6 +887,7 @@ const MS = (() => {
     document.querySelectorAll('tr.click').forEach((tr) => { const open = () => openForm(S.movimenti.find((m) => m.id === tr.dataset.id)); tr.addEventListener('click', open); tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') open(); }); });
   };
   after.impostazioni = () => {
+    if (after.account) after.account();
     document.querySelectorAll('[data-set]').forEach((el) => el.addEventListener('change', () => { const k = el.dataset.set; S.impostazioni[k] = el.type === 'number' ? Number(el.value) : el.value; save(); renderHead(calc(S, today(), UI.goal)); toast('Salvato'); }));
     document.querySelectorAll('[data-ed]').forEach((b) => b.addEventListener('click', () => openEditor(b.dataset.ed, Number(b.dataset.i))));
     document.querySelectorAll('[data-new]').forEach((b) => b.addEventListener('click', () => openEditor(b.dataset.new, -1)));
@@ -868,13 +896,13 @@ const MS = (() => {
     const json = () => JSON.stringify(S);
     $('bkCopy').onclick = () => copy(json(), null, 'Backup copiato: incollalo in una nota o in un file.');
     $('bkDown').onclick = () => { if (NATIVE && Cap.Plugins.Share) { Cap.Plugins.Share.share({ title: 'Backup Avanzo', text: json() }).catch(() => {}); return; } try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([json()], { type: 'application/json' })); a.download = `avanzo-backup-${iso(new Date())}.json`; document.body.appendChild(a); a.click(); a.remove(); toast('Download avviato. Se non parte, usa "Copia il backup".'); } catch (e) { toast('Download non disponibile qui: usa "Copia il backup".'); } };
-    const restore = (txt) => { try { const d = JSON.parse(txt); if (!d || !d.v || !Array.isArray(d.movimenti)) throw 0; S = migra(d); save(); render(); toast(`Ripristinato: ${S.movimenti.length} movimenti.`); } catch (e) { toast('Il testo non è un backup di Avanzo valido.'); } };
+    const restore = (txt) => { try { const d = JSON.parse(txt); if (!d || !d.v || !Array.isArray(d.movimenti)) throw 0; S = migra(d); S.base = Date.now(); if (Sync.user) S.syncUser = Sync.user.id; save(); render(); toast(`Ripristinato: ${S.movimenti.length} movimenti.`); } catch (e) { toast('Il testo non è un backup di Avanzo valido.'); } };
     $('bkRestore').onclick = () => restore($('bkPaste').value);
     $('bkFile').onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => restore(r.result); r.readAsText(f); };
-    $('loadDemo').onclick = () => { S = demo(today()); save(); UI.tab = 'panoramica'; render(); toast('Dati di esempio caricati.'); };
+    $('loadDemo').onclick = () => { S = demo(today()); if (Sync.user) { S.demo = false; S.syncUser = Sync.user.id; } save(); UI.tab = 'panoramica'; render(); toast('Dati di esempio caricati.'); };
     $('wipe').onclick = () => { $('wipeConfirm').hidden = false; };
     $('wipeNo').onclick = () => { $('wipeConfirm').hidden = true; };
-    $('wipeYes').onclick = () => { S = vuoto(); save(); render(); toast('Dati cancellati. Inizia dal profilo e dai conti.'); };
+    $('wipeYes').onclick = () => { S = vuoto(); if (Sync.user) S.syncUser = Sync.user.id; save(); render(); toast('Dati cancellati. Inizia dal profilo e dai conti.'); };
   };
   function copy(text, el, msg) {
     const done = () => toast(msg || 'Copiato');
@@ -908,20 +936,22 @@ const MS = (() => {
     const close = () => { $('modal').innerHTML = ''; };
     $('fCancel').onclick = close; $('scrim').addEventListener('click', (e) => { if (e.target.id === 'scrim') close(); });
     document.addEventListener('keydown', function esc1(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc1); } });
-    if (edit) { $('fDel').onclick = () => { $('delConfirm').hidden = false; }; $('delNo').onclick = () => { $('delConfirm').hidden = true; }; $('delYes').onclick = () => { S.movimenti = S.movimenti.filter((y) => y.id !== x.id && !(x.gruppo && y.gruppo === x.gruppo)); save(); close(); render(); toast('Transazione eliminata.'); }; }
+    if (edit) { $('fDel').onclick = () => { $('delConfirm').hidden = false; }; $('delNo').onclick = () => { $('delConfirm').hidden = true; }; $('delYes').onclick = () => { const via = S.movimenti.filter((y) => y.id === x.id || (x.gruppo && y.gruppo === x.gruppo)).map((y) => y.id); S.movimenti = S.movimenti.filter((y) => !via.includes(y.id)); segnaEliminati(via); save(); close(); render(); toast('Transazione eliminata.'); }; }
     $('form').addEventListener('submit', (e) => {
       e.preventDefault();
       const imp = Math.abs(parseImporto($('fImp').value));
       if (!imp) { $('fErr').textContent = 'Scrivi un importo, ad esempio 12,50.'; $('fImp').focus(); return; }
       const data = $('fData').value || iso(new Date()), conto = $('fConto').value, descr = $('fDesc').value.trim() || (tipo === 'tr' ? 'Trasferimento' : 'Senza descrizione');
-      if (edit) S.movimenti = S.movimenti.filter((y) => y.id !== x.id && !(x.gruppo && y.gruppo === x.gruppo));
+      const vecchi = edit ? S.movimenti.filter((y) => y.id === x.id || (x.gruppo && y.gruppo === x.gruppo)).map((y) => y.id) : [];
+      if (edit) S.movimenti = S.movimenti.filter((y) => !vecchi.includes(y.id));
       if (tipo === 'tr') {
         const to = $('fTo').value; if (to === conto) { $('fErr').textContent = 'Scegli due conti diversi.'; return; }
-        const g = uid(); S.movimenti.push({ id: uid(), gruppo: g, data, importo: -imp, categoria: 'Trasferimento', descrizione: descr, conto, fonte: 'manuale' }, { id: uid(), gruppo: g, data, importo: imp, categoria: 'Trasferimento', descrizione: descr, conto: to, fonte: 'manuale' });
+        const g = uid(), mod = Date.now(); S.movimenti.push({ id: uid(), gruppo: g, data, importo: -imp, categoria: 'Trasferimento', descrizione: descr, conto, fonte: 'manuale', mod }, { id: uid(), gruppo: g, data, importo: imp, categoria: 'Trasferimento', descrizione: descr, conto: to, fonte: 'manuale', mod });
       } else {
-        const cat = $('fCat').value; S.movimenti.push({ id: edit ? x.id : uid(), data, importo: tipo === 'in' ? imp : -imp, categoria: cat, descrizione: descr, conto, fonte: x.fonte || 'manuale' });
+        const cat = $('fCat').value; S.movimenti.push({ id: edit ? x.id : uid(), data, importo: tipo === 'in' ? imp : -imp, categoria: cat, descrizione: descr, conto, fonte: x.fonte || 'manuale', mod: Date.now() });
         if (descr && cat !== 'Da classificare') S.regole[descr.toLowerCase()] = cat;
       }
+      segnaEliminati(vecchi.filter((id) => !S.movimenti.some((y) => y.id === id)));
       save(); close(); render(); toast(edit ? 'Transazione aggiornata.' : `Aggiunta: ${descr}, ${eur(tipo === 'in' ? imp : -imp)}.`);
     });
     setTimeout(() => $('fImp') && $('fImp').focus(), 50);
@@ -936,7 +966,7 @@ const MS = (() => {
     if (!test && S.importati.includes(L.chiave)) { toast('Questa transazione era già stata registrata.'); return true; }
     const m = nuovaDaLink(S, L, new Date());
     if (L.salva) {
-      S.movimenti.push(m); if (!test) { S.importati.push(L.chiave); S.importati = S.importati.slice(-300); }
+      m.mod = Date.now(); S.movimenti.push(m); if (!test) { S.importati.push(L.chiave); S.importati = S.importati.slice(-300); }
       save(); render(); toast(`Dal telefono: ${m.descrizione}, ${eur(m.importo)} su ${contoNome(m.conto)}${m.categoria === 'Da classificare' ? ' (da classificare)' : ''}.`);
     } else { openForm(m, true); if (!test) { S.importati.push(L.chiave); save(); } }
     return true;
@@ -945,6 +975,103 @@ const MS = (() => {
     const href = location.href;
     if (handleLink(href, false)) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
   }
+
+  /* ---------- account e sincronizzazione (Supabase) ---------- */
+  const CFG = window.AVANZO_CONFIG || {};
+  const SB = CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'avanzo.auth' } }) : null;
+  const Sync = { user: null, versione: 0, stato: 'off', ultimo: null, timer: null, busy: false, again: false, emailInviata: '' };
+  const statoTesto = () => Sync.stato === 'ok' ? `Sincronizzato alle ${new Date(Sync.ultimo).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}` : Sync.stato === 'invio' ? 'Sincronizzazione in corso…' : Sync.stato === 'errore' ? 'Non sincronizzato: riprovo appena possibile' : Sync.stato === 'offline' ? 'Offline: sincronizzo appena torna la rete' : '';
+  function mostraStato() {
+    const el = document.getElementById('syncStato'); if (el) el.textContent = statoTesto();
+    const w = $('who'); if (w) w.textContent = [S.impostazioni.nome, Sync.user ? (Sync.stato === 'ok' ? 'sincronizzato' : Sync.stato === 'errore' || Sync.stato === 'offline' ? 'non sincronizzato' : '') : ''].filter(Boolean).join(' · ');
+  }
+  async function leggiRemoto() {
+    const { data, error } = await SB.from('stati').select('dati, versione').eq('user_id', Sync.user.id).maybeSingle();
+    if (error) throw error; return data;
+  }
+  async function invia() {
+    if (!SB || !Sync.user) return;
+    if (Sync.busy) { Sync.again = true; return; }
+    if (!navigator.onLine) { Sync.stato = 'offline'; mostraStato(); return; }
+    Sync.busy = true; Sync.stato = 'invio'; mostraStato();
+    try {
+      for (let t = 0; t < 4; t++) {
+        if (Sync.versione === 0) {
+          const { error } = await SB.from('stati').insert({ user_id: Sync.user.id, dati: S, versione: 1 });
+          if (!error) { Sync.versione = 1; break; }
+          if (error.code !== '23505') throw error;
+        } else {
+          const { data, error } = await SB.from('stati').update({ dati: S, versione: Sync.versione + 1, aggiornato_il: new Date().toISOString() }).eq('user_id', Sync.user.id).eq('versione', Sync.versione).select('versione');
+          if (error) throw error;
+          if (data && data.length) { Sync.versione = data[0].versione; break; }
+        }
+        // un altro dispositivo ha salvato nel frattempo: unisco e riprovo
+        const r = await leggiRemoto();
+        if (r) { S = unisci(S, r.dati); Sync.versione = r.versione; saveLocal(); render(); } else Sync.versione = 0;
+      }
+      Sync.stato = 'ok'; Sync.ultimo = Date.now();
+    } catch (e) { Sync.stato = 'errore'; console.warn('sync', e); setTimeout(programma, 15000); }
+    finally { Sync.busy = false; mostraStato(); if (Sync.again) { Sync.again = false; programma(); } }
+  }
+  function programma() { if (!Sync.user) return; clearTimeout(Sync.timer); Sync.timer = setTimeout(invia, 1200); }
+  async function aggiorna() {
+    if (!SB || !Sync.user || Sync.busy || !navigator.onLine) return;
+    try { const r = await leggiRemoto(); if (r && r.versione > Sync.versione) { S = unisci(S, r.dati); Sync.versione = r.versione; saveLocal(); render(); } Sync.stato = 'ok'; Sync.ultimo = Date.now(); mostraStato(); } catch (e) { Sync.stato = 'errore'; mostraStato(); }
+  }
+  async function accesso(user) {
+    if (Sync.user && Sync.user.id === user.id) return;
+    Sync.user = user; Sync.stato = 'invio'; mostraStato();
+    try {
+      const r = await leggiRemoto();
+      if (!r) { if (S.demo) S = vuoto(); Sync.versione = 0; }
+      else if (S.demo) { S = migra(r.dati); Sync.versione = r.versione; }
+      else if (S.syncUser === user.id) { S = unisci(S, r.dati); Sync.versione = r.versione; }
+      else { S = unisci({ ...S, base: r.dati.base || 1 }, r.dati); Sync.versione = r.versione; }
+      S.syncUser = user.id; saveLocal(); render(); await invia();
+    } catch (e) { Sync.stato = 'errore'; mostraStato(); }
+  }
+  async function uscita() {
+    clearTimeout(Sync.timer);
+    if (SB) await SB.auth.signOut().catch(() => {});
+    Sync.user = null; Sync.versione = 0; Sync.stato = 'off';
+    S = vuoto(); saveLocal(); render(); toast('Sei uscito. I tuoi dati restano salvati nel tuo account.');
+  }
+  window.AvanzoSync = { programma };
+  V.account = () => {
+    if (!SB) return '';
+    if (Sync.user) return `<div class="card" style="margin-bottom:14px"><div class="card-head"><h2>Account</h2><button class="btn ghost small" id="acOut">Esci</button></div><p class="note" style="margin:0">Collegato come <b>${esc(Sync.user.email || '')}</b> · <span id="syncStato">${esc(statoTesto())}</span></p></div>`;
+    return `<div class="card" style="margin-bottom:14px"><h2>Account</h2><p class="note">Accedi per salvare i dati in modo sicuro e usarli su più dispositivi. Ti mandiamo un codice via email, nessuna password.</p>
+      <div class="controls" style="margin:0">${Sync.emailInviata
+        ? `<label class="f" for="acCode">Codice ricevuto a ${esc(Sync.emailInviata)}<input id="acCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></label><button class="btn" id="acVerify">Accedi</button><button class="btn ghost" id="acBack">Cambia email</button>`
+        : `<label class="f" for="acEmail" style="flex:2 1 14rem">Email<input id="acEmail" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></label><button class="btn" id="acSend">Inviami il codice</button>`}</div>
+      <p class="hint" id="acErr" role="alert"></p></div>`;
+  };
+  after.account = () => {
+    if (!SB) return;
+    const err = (m) => { const e = document.getElementById('acErr'); if (e) e.textContent = m; };
+    const out = document.getElementById('acOut'); if (out) out.onclick = uscita;
+    const send = document.getElementById('acSend');
+    if (send) send.onclick = async () => {
+      const email = $('acEmail').value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err('Scrivi un indirizzo email valido.');
+      send.disabled = true; err('');
+      const { error } = await SB.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+      send.disabled = false;
+      if (error) return err('Non siamo riusciti a inviare il codice. Riprova tra un minuto.');
+      Sync.emailInviata = email; render();
+    };
+    const ver = document.getElementById('acVerify');
+    if (ver) ver.onclick = async () => {
+      const token = $('acCode').value.replace(/\D/g, '');
+      if (token.length < 6) return err('Il codice ha 6 cifre: controlla l\'email.');
+      ver.disabled = true; err('');
+      const { data, error } = await SB.auth.verifyOtp({ email: Sync.emailInviata, token, type: 'email' });
+      ver.disabled = false;
+      if (error || !data.user) return err('Codice non valido o scaduto. Chiedine uno nuovo.');
+      Sync.emailInviata = ''; await accesso(data.user); toast('Accesso fatto: i tuoi dati ora sono salvati nel tuo account.');
+    };
+    const back = document.getElementById('acBack'); if (back) back.onclick = () => { Sync.emailInviata = ''; render(); };
+  };
 
   /* ---------- avvio ---------- */
   $('tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (!b) return; UI.tab = b.dataset.tab; try { localStorage.setItem(KEY + '.tab', UI.tab); } catch (er) {} render(); });
@@ -955,7 +1082,13 @@ const MS = (() => {
     if (Pref) {
       try { const r = await Pref.get({ key: KEY }); if (r && r.value) { const d = JSON.parse(r.value); if (d && d.v) S = migra(d); } } catch (e) {}
     }
-    save(); render(); fromUrl();
+    saveLocal(); render(); fromUrl();
+    if (SB) {
+      SB.auth.onAuthStateChange((ev, session) => { if (ev === 'SIGNED_OUT') { Sync.user = null; mostraStato(); } });
+      try { const { data } = await SB.auth.getSession(); if (data && data.session && data.session.user) await accesso(data.session.user); } catch (e) {}
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') aggiorna(); });
+      addEventListener('online', () => programma());
+    }
     addEventListener('hashchange', fromUrl);
     if (NATIVE && Cap.Plugins.App) {
       const AppP = Cap.Plugins.App;
