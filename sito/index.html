@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Avanzo – quanto puoi spendere fino allo stipendio</title>
+<meta name="description" content="Avanzo calcola ogni giorno quanto puoi spendere davvero fino allo stipendio, togliendo bollette, rate e spese essenziali.">
+<link rel="icon" href="icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F5F2}
+a{color:#0E5A4D}a:hover{color:#08362E}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px;box-sizing:border-box}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px;align-items:center}
+.nav-links{display:flex;gap:28px;align-items:center}
+@media (max-width:900px){.g3,.g2,.hero{grid-template-columns:minmax(0,1fr)}.nav-links .hide-m{display:none}.h1{font-size:44px !important}}
+</style>
+
+</head>
+<body>
+
+<div style="font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #10231F; background: #F3F5F2; font-size: 17px; line-height: 1.55">
+
+  <!-- NAV -->
+  <header style="border-bottom: 1px solid #D5DDD8; background: #F3F5F2">
+    <div class="wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 18px; padding-bottom: 18px; flex-wrap: wrap">
+      <a href="#top" style="display: flex; gap: 10px; align-items: center; text-decoration: none; color: #10231F">
+        <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12" fill="none" stroke="#0E5A4D" stroke-width="2.5"></circle><path d="M14 2a12 12 0 0 1 0 24" fill="#F2C14E"></path></svg>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -0.01em">Avanzo</span>
+      </a>
+      <nav class="nav-links" aria-label="Principale">
+        <a class="hide-m" href="#come" style="color: #10231F; text-decoration: none">Come funziona</a>
+        <a class="hide-m" href="#cosa" style="color: #10231F; text-decoration: none">Cosa vedi</a>
+        <a class="hide-m" href="#prezzo" style="color: #10231F; text-decoration: none">Prezzo</a>
+        <a class="hide-m" href="#faq" style="color: #10231F; text-decoration: none">Domande</a>
+        <a href="#prezzo" style="background: #10231F; color: #F3F5F2; text-decoration: none; padding: 12px 18px; border-radius: 10px; font-weight: 500; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Inizia gratis</a>
+      </nav>
+    </div>
+  </header>
+
+
+  <!-- PREVENDITA FONDATORI -->
+  <section id="fondatori" style="background: #F2C14E; color: #10231F; padding: 28px 0">
+    <div class="wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap">
+      <div style="max-width: 46em">
+        <div style="font-weight: 700; font-size: 20px; margin-bottom: 4px">Prevendita fondatori: Avanzo Plus a vita a 49,99 € invece di 69,99 €</div>
+        <div style="font-size: 15px">Solo 300 posti. Accesso alla beta entro il [DATA BETA] e lancio entro il [DATA LANCIO]. Se l'app non arriva entro quella data, ti rimborsiamo tutto.</div>
+      </div>
+      <a href="[LINK PAGAMENTO STRIPE]" style="background: #10231F; color: #FFFFFF; text-decoration: none; padding: 15px 24px; border-radius: 12px; font-weight: 600; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Diventa fondatore – 49,99 €</a>
+    </div>
+  </section>
+
+  <!-- HERO -->
+  <section id="top" style="padding: 80px 0 72px">
+    <div class="wrap hero">
+      <div>
+        <div style="display: inline-flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 500; color: #0E5A4D; background: #DDEBE5; border-radius: 999px; padding: 6px 14px; margin-bottom: 24px">Per iPhone e Android, si installa dal browser</div>
+        <h1 class="h1" style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 62px; line-height: 1.02; letter-spacing: -0.025em; margin: 0 0 24px">Sai sempre quanto ti avanza fino allo stipendio.</h1>
+        <p style="font-size: 20px; margin: 0 0 32px; max-width: 34em; color: #34463F">Avanzo calcola ogni giorno quanto puoi spendere davvero, togliendo bollette, rate e spese essenziali. I pagamenti arrivano da soli dal telefono, i tuoi dati non lasciano mai il telefono.</p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap">
+          <a href="app/" style="background: #0E5A4D; color: #FFFFFF; text-decoration: none; padding: 15px 24px; border-radius: 12px; font-weight: 600; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Inizia gratis</a>
+          <a href="#installa" style="color: #10231F; text-decoration: none; padding: 15px 24px; border-radius: 12px; font-weight: 500; border: 1.5px solid #10231F; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Come si installa</a>
+        </div>
+        <p style="font-size: 14px; color: #55665F; margin: 20px 0 0">Gratis per sempre nella versione base. Plus con 14 giorni di prova. Nessuna pubblicità, niente da scaricare dagli store.</p>
+      </div>
+
+      <!-- mock -->
+      <div role="img" aria-label="Anteprima dell'app con dati di esempio" style="background: #FFFFFF; border: 1px solid #D5DDD8; border-radius: 28px; padding: 24px; box-shadow: 0 24px 48px -24px rgba(16,35,31,0.25); max-width: 420px; justify-self: center; width: 100%; box-sizing: border-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 8px; flex-wrap: wrap">
+          <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700">Avanzo</span>
+          <span style="font-size: 12px; color: #6B4E00; background: #FBEFC9; border-radius: 999px; padding: 3px 10px">Dati di esempio</span>
+        </div>
+        <div style="background: #0E5A4D; color: #FFFFFF; border-radius: 18px; padding: 18px 20px; margin-bottom: 16px">
+          <div style="font-size: 13px; opacity: .85">Puoi spendere davvero fino allo stipendio</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 44px; letter-spacing: -0.02em; line-height: 1.1">811 €</div>
+          <div style="font-size: 13px; opacity: .9">circa 81 € al giorno · stipendio il 27 ottobre</div>
+        </div>
+        <svg viewBox="0 0 400 120" width="100%" aria-hidden="true" style="display: block; margin-bottom: 14px">
+          <line x1="0" y1="112" x2="400" y2="112" stroke="#E3E9E5"></line>
+          <polyline points="0,40 36,46 72,52 108,72 144,78 180,93 216,99 252,105 288,108 324,110" fill="none" stroke="#0E5A4D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          <polyline points="0,40 36,44 72,47 108,65 144,68 180,80 216,83 252,86 288,90 324,93" fill="none" stroke="#C98A00" stroke-width="3" stroke-dasharray="6 5" stroke-linecap="round"></polyline>
+          <line x1="324" y1="110" x2="360" y2="8" stroke="#0E5A4D" stroke-width="3" stroke-linecap="round"></line>
+        </svg>
+        <div style="display: grid; gap: 8px; font-size: 14px">
+          <div style="display: flex; justify-content: space-between; gap: 8px"><span>Bolletta acqua</span><span style="color: #A12C1E; font-weight: 600">in ritardo · 38,20 €</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 8px"><span>Bar Centrale · dal telefono</span><span style="font-weight: 600">−4,20 €</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 8px"><span>Ristoranti e bar</span><span style="color: #6B4E00; font-weight: 600">troppo in fretta</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEMI -->
+  <section style="background: #10231F; color: #E9EFEC; padding: 72px 0">
+    <div class="wrap">
+      <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 38px; letter-spacing: -0.02em; margin: 0 0 40px; color: #FFFFFF; max-width: 22em">Il saldo del conto dice quanto hai. Non quanto puoi spendere.</h2>
+      <div class="g3">
+        <div><h3 style="margin: 0 0 8px; font-size: 18px; color: #F2C14E">Mancano ancora le spese fisse</h3><p style="margin: 0">Affitto, bollette e rate devono ancora uscire, ma nel saldo sembrano soldi liberi.</p></div>
+        <div><h3 style="margin: 0 0 8px; font-size: 18px; color: #F2C14E">Le app chiedono troppo</h3><p style="margin: 0">O registri ogni caffè a mano, o devi dare l'accesso alla banca a un servizio esterno.</p></div>
+        <div><h3 style="margin: 0 0 8px; font-size: 18px; color: #F2C14E">Risparmiare resta un'idea</h3><p style="margin: 0">Vorresti mettere da parte una cifra al mese, ma non sai dove tagliare senza rinunciare a tutto.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COME FUNZIONA -->
+  <section id="come" style="padding: 88px 0">
+    <div class="wrap">
+      <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 0 0 40px">Come funziona</h2>
+      <div class="g3">
+        <div style="background: #FFFFFF; border: 1px solid #D5DDD8; border-radius: 16px; padding: 28px">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: #DDEBE5; color: #0E5A4D; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-bottom: 16px">1</div>
+          <h3 style="margin: 0 0 8px; font-size: 20px">Cinque minuti per partire</h3>
+          <p style="margin: 0; color: #34463F">Inserisci stipendio, giorno di paga, conti e spese fisse. Avanzo fa subito il primo conto.</p>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #D5DDD8; border-radius: 16px; padding: 28px">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: #DDEBE5; color: #0E5A4D; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-bottom: 16px">2</div>
+          <h3 style="margin: 0 0 8px; font-size: 20px">Le spese arrivano da sole</h3>
+          <p style="margin: 0; color: #34463F">Su iPhone un Comando registra ogni pagamento con Apple Pay; su Android le notifiche della banca. Il resto con il tasto +.</p>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #D5DDD8; border-radius: 16px; padding: 28px">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: #DDEBE5; color: #0E5A4D; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-bottom: 16px">3</div>
+          <h3 style="margin: 0 0 8px; font-size: 20px">Ogni giorno sai la cifra</h3>
+          <p style="margin: 0; color: #34463F">Apri l'app e vedi quanto puoi spendere oggi, cosa scade e se stai correndo troppo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COSA VEDI -->
+  <section id="cosa" style="padding: 0 0 88px">
+    <div class="wrap">
+      <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 0 0 40px">Cosa trovi dentro</h2>
+      <div class="g3">
+        <div style="border-top: 2px solid #10231F; padding-top: 18px"><h3 style="margin: 0 0 6px; font-size: 19px">Panoramica</h3><p style="margin: 0; color: #34463F">Liquidità, entrate e uscite medie, consigli su cosa fare ora, fondo emergenze e debiti con il mese in cui si liberano.</p></div>
+        <div style="border-top: 2px solid #10231F; padding-top: 18px"><h3 style="margin: 0 0 6px; font-size: 19px">Fino allo stipendio</h3><p style="margin: 0; color: #34463F">Saldo previsto giorno per giorno, come al solito o solo essenziale, e scadenze pagate, da pagare o in ritardo.</p></div>
+        <div style="border-top: 2px solid #10231F; padding-top: 18px"><h3 style="margin: 0 0 6px; font-size: 19px">Budget</h3><p style="margin: 0; color: #34463F">Un limite per categoria con la linea "oggi": se la barra la supera, stai spendendo troppo in fretta.</p></div>
+        <div style="border-top: 2px solid #10231F; padding-top: 18px"><h3 style="margin: 0 0 6px; font-size: 19px">Analisi spese</h3><p style="margin: 0; color: #34463F">Indispensabili, necessarie e desideri; il ritmo del mese contro il precedente; i giorni più cari; il calendario.</p></div>
+        <div style="border-top: 2px solid #10231F; padding-top: 18px"><h3 style="margin: 0 0 6px; font-size: 19px">Piano di risparmio</h3><p style="margin: 0; color: #34463F">Scegli quanto mettere da parte: Avanzo propone i nuovi budget e li applica con un tasto. Più previsione a 6 mesi.</p></div>
+        <div style="border-top: 2px solid #10231F; padding-top: 18px"><h3 style="margin: 0 0 6px; font-size: 19px">Movimenti</h3><p style="margin: 0; color: #34463F">Ricerca, filtri e modifica in un tocco. Avanzo impara la categoria di ogni esercente.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <section id="demo" style="padding: 72px 0; background: #FFFFFF; border-top: 1px solid #D5DDD8; border-bottom: 1px solid #D5DDD8">
+    <div class="wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 32px; flex-wrap: wrap">
+      <div style="max-width: 40em">
+        <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 36px; letter-spacing: -0.02em; margin: 0 0 12px">Provala prima, nel browser</h2>
+        <p style="margin: 0; color: #34463F">La demo si apre con i conti di Chiara, una persona inventata: stipendio il 27, due rate, un fondo emergenze a metà. Aggiungi spese, cambia i budget, prova il piano.</p>
+      </div>
+      <a href="app/" style="background: #10231F; color: #F3F5F2; text-decoration: none; padding: 15px 24px; border-radius: 12px; font-weight: 600; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Apri la demo</a>
+    </div>
+  </section>
+
+  <!-- PREZZO -->
+  <section id="prezzo" style="padding: 88px 0">
+    <div class="wrap">
+      <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 0 0 12px">Scegli il tuo piano</h2>
+      <p style="margin: 0 0 40px; color: #34463F; max-width: 44em">La versione gratuita si usa già oggi. Plus arriva al lancio con 14 giorni di prova; chi entra adesso come fondatore lo ha per sempre a 49,99 €.</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 20px; align-items: stretch">
+        <div style="background: #FFFFFF; border: 1px solid #D5DDD8; border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+          <div style="font-weight: 600">Gratis</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 500">0 €</div>
+          <ul style="margin: 0; padding-left: 20px; color: #34463F; display: grid; gap: 6px; flex-grow: 1">
+            <li>Tutte le schede di analisi</li>
+            <li>1 conto, inserimento manuale</li>
+            <li>Ultimi 3 mesi di storico</li>
+          </ul>
+          <a href="app/" style="text-align: center; color: #10231F; text-decoration: none; padding: 13px 18px; border-radius: 12px; font-weight: 600; border: 1.5px solid #10231F; min-height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: center">Inizia gratis</a>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #D5DDD8; border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+          <div style="font-weight: 600">Plus mensile</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 500">3,99 € <span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; color: #55665F">/ mese</span></div>
+          <ul style="margin: 0; padding-left: 20px; color: #34463F; display: grid; gap: 6px; flex-grow: 1">
+            <li>Conti e storico illimitati</li>
+            <li>Spese automatiche dal telefono</li>
+            <li>Piano di risparmio e simulatore</li>
+            <li>Sincronizzazione e backup automatico</li>
+            <li>Riepilogo ogni lunedì e a fine mese</li>
+          </ul>
+          <span style="text-align: center; color: inherit; opacity: .75; padding: 13px 18px; border-radius: 12px; font-weight: 600; border: 1.5px dashed currentColor; min-height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: center">Disponibile al lancio</span>
+        </div>
+        <div style="background: #10231F; color: #E9EFEC; border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-weight: 600; color: #FFFFFF">Plus annuale</span><span style="font-size: 12px; background: #F2C14E; color: #10231F; border-radius: 999px; padding: 3px 10px; font-weight: 600">Risparmi il 37%</span></div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 500; color: #FFFFFF">29,99 € <span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; color: #B9C7C1">/ anno</span></div>
+          <ul style="margin: 0; padding-left: 20px; display: grid; gap: 6px; flex-grow: 1">
+            <li>Tutto quello che c'è in Plus</li>
+            <li>Circa 2,50 € al mese</li>
+            <li>Un solo pagamento all'anno</li>
+          </ul>
+          <span style="text-align: center; color: inherit; opacity: .75; padding: 13px 18px; border-radius: 12px; font-weight: 600; border: 1.5px dashed currentColor; min-height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: center">Disponibile al lancio</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1.5px solid #0E5A4D; border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+          <div style="font-weight: 600">Plus a vita</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 500">69,99 €</div>
+          <ul style="margin: 0; padding-left: 20px; color: #34463F; display: grid; gap: 6px; flex-grow: 1">
+            <li>Tutto Plus, per sempre</li>
+            <li>Un pagamento, nessun rinnovo</li>
+            <li>Ai primi 300 fondatori: 49,99 €</li>
+          </ul>
+          <a href="[LINK PAGAMENTO STRIPE]" style="text-align: center; background: #0E5A4D; color: #FFFFFF; text-decoration: none; padding: 13px 18px; border-radius: 12px; font-weight: 600; min-height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: center">Diventa fondatore</a>
+        </div>
+      </div>
+      <p style="margin: 20px 0 0; font-size: 14px; color: #55665F">Pagamento sicuro con carta. Abbonamenti gestibili e disdicibili in un tocco dal tuo profilo. Prezzi IVA inclusa.</p>
+    </div>
+  </section>
+
+  <!-- PRIVACY -->
+  <section style="padding: 0 0 88px">
+    <div class="wrap g2" style="align-items: center">
+      <div>
+        <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 36px; letter-spacing: -0.02em; margin: 0 0 12px">I tuoi soldi restano affari tuoi</h2>
+        <p style="margin: 0; color: #34463F">Senza account, tutto resta nel telefono. Se con Plus attivi la sincronizzazione, i dati viaggiano cifrati su server in Europa e non vengono mai venduti né usati per pubblicità.</p>
+      </div>
+      <div style="display: grid; gap: 12px">
+        <div style="display: flex; gap: 12px; align-items: flex-start"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 3px"><path d="M5 12l4 4 10-10" fill="none" stroke="#0E5A4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Account solo se vuoi la sincronizzazione</span></div>
+        <div style="display: flex; gap: 12px; align-items: flex-start"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 3px"><path d="M5 12l4 4 10-10" fill="none" stroke="#0E5A4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Nessun accesso al conto in banca</span></div>
+        <div style="display: flex; gap: 12px; align-items: flex-start"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 3px"><path d="M5 12l4 4 10-10" fill="none" stroke="#0E5A4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Nessuna pubblicità e nessun tracciamento</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" style="padding: 72px 0; background: #FFFFFF; border-top: 1px solid #D5DDD8">
+    <div class="wrap" style="max-width: 820px">
+      <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em; margin: 0 0 32px">Domande</h2>
+      <details id="installa" style="border-bottom: 1px solid #D5DDD8; padding: 18px 0"><summary style="font-weight: 600; cursor: pointer">Come si installa sul telefono?</summary><p style="margin: 12px 0 0; color: #34463F">Non serve passare dagli store. Su iPhone apri app/ con Safari, tocca Condividi e poi "Aggiungi alla schermata Home". Su Android aprilo con Chrome e tocca "Installa app". Avanzo compare con la sua icona, a schermo intero, e ti manda le notifiche.</p></details>
+      <details style="border-bottom: 1px solid #D5DDD8; padding: 18px 0"><summary style="font-weight: 600; cursor: pointer">Devo collegare il conto in banca?</summary><p style="margin: 12px 0 0; color: #34463F">No. Le spese arrivano dal telefono (pagamenti con Apple Pay su iPhone, notifiche della banca su Android) oppure le aggiungi con il tasto +.</p></details>
+      <details style="border-bottom: 1px solid #D5DDD8; padding: 18px 0"><summary style="font-weight: 600; cursor: pointer">Le transazioni automatiche funzionano con la mia carta?</summary><p style="margin: 12px 0 0; color: #34463F">Su iPhone con le carte aggiunte al Wallet di Apple, tramite un Comando che invia il pagamento ad Avanzo. Su Android con le banche e le app che mostrano una notifica per ogni pagamento. Nell'app trovi la guida passo per passo.</p></details>
+      <details style="border-bottom: 1px solid #D5DDD8; padding: 18px 0"><summary style="font-weight: 600; cursor: pointer">E se cambio telefono?</summary><p style="margin: 12px 0 0; color: #34463F">Con Plus i dati si sincronizzano da soli. Con la versione gratuita fai un backup dalle Impostazioni e lo ripristini sul nuovo telefono.</p></details>
+      <details style="border-bottom: 1px solid #D5DDD8; padding: 18px 0"><summary style="font-weight: 600; cursor: pointer">È consulenza finanziaria?</summary><p style="margin: 12px 0 0; color: #34463F">No. Avanzo ti aiuta a organizzare entrate, spese e risparmi; non dà indicazioni su investimenti o prodotti finanziari.</p></details>
+      <details style="padding: 18px 0"><summary style="font-weight: 600; cursor: pointer">Come disdico l'abbonamento?</summary><p style="margin: 12px 0 0; color: #34463F">Dal tuo profilo nell'app, quando vuoi: Plus resta attivo fino alla fine del periodo pagato. Per un problema o un rimborso scrivi a [EMAIL].</p></details>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="padding: 88px 0; background: #0E5A4D; color: #FFFFFF">
+    <div class="wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 32px; flex-wrap: wrap">
+      <h2 style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 42px; letter-spacing: -0.02em; margin: 0; max-width: 16em">Arriva allo stipendio sapendo già come andrà.</h2>
+      <a href="#prezzo" style="background: #F2C14E; color: #10231F; text-decoration: none; padding: 16px 26px; border-radius: 12px; font-weight: 600; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Inizia gratis</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="padding: 40px 0 56px; font-size: 13px; color: #55665F">
+    <div class="wrap" style="display: grid; gap: 10px">
+      <p style="margin: 0">Avanzo è un'app di [NOME / RAGIONE SOCIALE], P. IVA [NUMERO]. </p>
+      <p style="margin: 0">Le informazioni mostrate dall'app hanno scopo organizzativo e non costituiscono consulenza finanziaria o d'investimento. I numeri delle immagini e della demo sono di esempio.</p>
+      <p style="margin: 0"><a href="privacy.html">Privacy</a> · <a href="[LINK TERMINI]">Termini</a> · <a href="mailto:[EMAIL]">Contatti</a></p>
+    </div>
+  </footer>
+</div>
+
+</body>
+</html>
