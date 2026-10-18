@@ -408,10 +408,10 @@ const MS = (() => {
     // consigli
     const cons = [];
     occ.filter((s) => s.stato === 'in ritardo').forEach((s) => cons.push(['bad', `Paga ${s.nome} (${eur(s.importo)}): era in scadenza il ${dl(s.data)}.`]));
-    budget.filter((b) => b.pct > 100).forEach((b) => cons.push(['bad', `${b.categoria}: budget superato (${eur(b.speso)} su ${eur(b.limite)}).`]));
+    budget.filter((b) => b.pct > 100).forEach((b) => cons.push(['bad', `Budget «${b.nome}» superato (${eur(b.speso)} su ${eur(b.limite)}).`]));
     if (daPagare.filter((s) => s.stato === 'da pagare').length) { const dp = daPagare.filter((s) => s.stato === 'da pagare'); cons.push(['warn', `Tieni da parte ${eur(dp.reduce((s, x) => s + x.importo, 0))} per ${dp.length} ${dp.length === 1 ? 'scadenza' : 'scadenze'} prima dello stipendio (${dp.map((s) => s.nome).join(', ')}).`]); }
     const restano = dim(T.getFullYear(), T.getMonth()) - T.getDate();
-    budget.filter((b) => b.pct > pctOggi + 1 && b.pct <= 100).forEach((b) => cons.push(['warn', `${b.categoria} corre più del mese (${Math.round(b.pct)}% speso al ${Math.round(pctOggi)}% del mese): restano ${eur(b.limite - b.speso)} per ${restano} giorni.`]));
+    budget.filter((b) => b.pct > pctOggi + 1 && b.pct <= 100).forEach((b) => cons.push(['warn', `Il budget «${b.nome}» corre più del mese (${Math.round(b.pct)}% speso al ${Math.round(pctOggi)}% del mese): restano ${eur(b.limite - b.speso)} per ${restano} giorni.`]));
     const dc = S.movimenti.filter((m) => m.categoria === 'Da classificare').length;
     if (dc) cons.push(['warn', `${dc} ${dc === 1 ? 'transazione arrivata dal telefono va classificata' : 'transazioni arrivate dal telefono vanno classificate'}: aprile in Movimenti.`]);
     if (saldoMedio < 0) cons.push(['warn', `In media escono ${eur(-saldoMedio)} al mese più di quanto entra: il piano in Ottimizzazione mostra dove recuperarli.`]);
