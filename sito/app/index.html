@@ -51,6 +51,17 @@ button { cursor: pointer; }
 .who { color: var(--muted); font-size: 14px; }
 .demo-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--sun-soft); border-radius: var(--r); padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
 .demo-bar b { font-weight: 600; }
+.seg { display: inline-flex; background: var(--line); border-radius: 999px; padding: 3px; margin-bottom: 14px; }
+.seg button { border: 0; background: transparent; font: inherit; font-weight: 600; padding: 8px 18px; border-radius: 999px; cursor: pointer; color: inherit; min-height: 40px; }
+.seg button.on { background: var(--panel); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.guida { margin: 0; padding: 0; list-style: none; counter-reset: g; display: grid; gap: 14px; }
+.guida li { counter-increment: g; position: relative; padding-left: 40px; line-height: 1.5; }
+.guida li::before { content: counter(g); position: absolute; left: 0; top: -1px; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: grid; place-items: center; font-size: 14px; }
+.guida .code { margin: 8px 0; word-break: break-all; }
+.check { margin-top: 16px; padding: 12px 14px; border-radius: var(--r); background: var(--sun-soft); font-size: 14px; }
+.adv { margin-top: 14px; }
+.adv summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.adv > * + * { margin-top: 10px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; margin-bottom: 18px; }
 .hero-main { background: var(--accent); color: var(--accent-ink); border-radius: 18px; padding: 22px 24px; display: grid; gap: 4px; align-content: start; }
 .hero-main .lbl { opacity: .85; font-size: 14px; }
@@ -170,13 +181,13 @@ span.cchip { min-height: 0; padding: 3px 10px; font-size: 12px; line-height: 1.4
 <div class="wrap">
   <header class="top">
     <div class="brand"><svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12" fill="none" stroke="var(--accent)" stroke-width="2.5"></circle><path d="M14 2a12 12 0 0 1 0 24" fill="var(--accent)"></path></svg>Avanzo</div>
-    <div class="who" id="who"></div>
+    <div style="display:flex;gap:10px;align-items:center"><div class="who" id="who"></div><button class="btn small" id="loginBtn" hidden>Accedi</button></div>
   </header>
   <div id="demoBar" class="demo-bar" hidden><span><b>Questa è la demo.</b> Chiara è una persona inventata: prova pure tutto. Per usare Avanzo con i tuoi conti serve Plus.</span><button class="btn small" id="startOwn">Usa i miei conti</button></div>
   <section class="hero" id="hero"></section>
   <nav class="tabs" role="tablist" aria-label="Sezioni" id="tabs"></nav>
   <main id="view"></main>
-  <p class="hint" style="margin-top:32px">Avanzo è un'app indipendente. I dati restano in questo browser: nessun server, nessun account. Le informazioni hanno scopo organizzativo e non sono consulenza finanziaria.</p>
+  <p class="hint" style="margin-top:32px">Avanzo è un'app indipendente. Le informazioni hanno scopo organizzativo e non sono consulenza finanziaria.</p>
 </div>
 <button class="fab" id="fab" aria-label="Nuova transazione"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg><span>Nuova transazione</span></button>
 <div id="modal"></div>
@@ -452,20 +463,36 @@ const MS = (() => {
     const n = parseFloat(s); return isNaN(n) ? NaN : (neg ? -n : n);
   }
 
+  /* Testo di una notifica della banca: "Pagamento di 12,50 € presso Bar Centrale con carta *1234" */
+  function daTesto(testo) {
+    const t = String(testo || '').replace(/\s+/g, ' ').trim(); if (!t) return null;
+    const num = '(\\d{1,3}(?:[.\\s]\\d{3})*(?:[.,]\\d{1,2})|\\d+(?:[.,]\\d{1,2})?)';
+    const pats = [new RegExp('(?:€|EUR)\\s?' + num, 'i'), new RegExp(num + '\\s?(?:€|EUR|euro)', 'i'), new RegExp('(?:importo|di|pagato|speso|addebito)\\s+(?:di\\s+)?' + num, 'i')];
+    let imp = NaN; for (const re of pats) { const m = t.match(re); if (m) { imp = parseImporto(m[1].replace(/\s/g, '')); if (!isNaN(imp) && imp !== 0) break; } }
+    if (isNaN(imp) || imp === 0) return null;
+    const m = t.match(/(?:^|\s)(?:presso|c\/o|at|esercente:?|da|su|a)\s+([A-Z0-9][^,.;€\n]{1,40}?)(?=\s+(?:il|di|per|con|in data|alle|ore|del|€|EUR)\b|[,.;€]|$)/);
+    let descr = m ? m[1].trim() : '';
+    if (/^(carta|conto|\d)/i.test(descr)) descr = '';
+    const entrata = /accredit|ricevut|in entrata|rimborso|hai ricevuto/i.test(t);
+    return { importo: Math.abs(imp), descrizione: descr, entrata };
+  }
+
   /* Link delle scorciatoie: ...#nuova?importo=12,50&descrizione=Bar&conto=Visa&fonte=iphone&salva=1 */
   function parseLink(str) {
     if (!str) return null;
     let q = '';
     const h = str.indexOf('#'), qi = str.indexOf('?');
     if (/nuova/i.test(str) && qi >= 0) q = str.slice(qi + 1).split('#')[0];
-    else if (qi >= 0 && /importo=/.test(str)) q = str.slice(qi + 1).split('#')[0];
-    if (!q && h >= 0 && /importo=/.test(str)) q = str.slice(h + 1).replace(/^\/?nuova\??/i, '');
+    else if (qi >= 0 && /(importo|testo)=/.test(str)) q = str.slice(qi + 1).split('#')[0];
+    if (!q && h >= 0 && /(importo|testo)=/.test(str)) q = str.slice(h + 1).replace(/^\/?nuova\??/i, '');
     if (!q) return null;
     const p = new URLSearchParams(q); const get = (...k) => { for (const x of k) { const v = p.get(x); if (v != null && v !== '') return v.trim(); } return null; };
-    const imp = parseImporto(get('importo', 'amount', 'importe'));
+    let imp = parseImporto(get('importo', 'amount', 'importe'));
+    const dt = (isNaN(imp) || imp === 0) ? (daTesto(get('testo', 'text')) || daTesto([get('titolo', 'title'), get('testo', 'text')].filter(Boolean).join(' · '))) : null;
+    if (dt) { imp = dt.importo; const tit = get('titolo', 'title'); if (!dt.descrizione && tit && !/\d/.test(tit) && !/wallet|pay|banca|bank|notifica/i.test(tit)) dt.descrizione = tit; }
     if (isNaN(imp) || imp === 0) return { errore: 'Importo mancante o non valido' };
     const tipo = (get('tipo', 'type') || '').toLowerCase();
-    return { importo: Math.abs(imp), entrata: tipo === 'entrata' || tipo === 'income', descrizione: get('descrizione', 'esercente', 'merchant', 'descr') || 'Pagamento', conto: get('conto', 'carta', 'card'), data: get('data', 'date'), categoria: get('categoria', 'category'), fonte: (get('fonte', 'source') || 'telefono').toLowerCase(), salva: get('salva', 'auto') === '1', chiave: q };
+    return { importo: Math.abs(imp), entrata: tipo === 'entrata' || tipo === 'income' || !!(dt && dt.entrata), descrizione: get('descrizione', 'esercente', 'merchant', 'descr') || (dt && dt.descrizione) || 'Pagamento', conto: get('conto', 'carta', 'card'), data: get('data', 'date'), categoria: get('categoria', 'category'), fonte: (get('fonte', 'source') || 'telefono').toLowerCase(), salva: get('salva', 'auto') === '1', chiave: q };
   }
 
   function nuovaDaLink(S, L, today) {
@@ -478,7 +505,7 @@ const MS = (() => {
     return { id: uid(), data, importo: L.entrata ? L.importo : -L.importo, categoria, descrizione: L.descrizione, conto: conto ? conto.id : '', fonte: L.fonte };
   }
 
-  return { iso, pd, ym, addDays, addMonths, uid, round2, demo, vuoto, migra, unisci, calc, eur, eur0, dl, ds, ml, ms, parseImporto, parseLink, nuovaDaLink, CATEGORIE };
+  return { iso, pd, ym, addDays, addMonths, uid, round2, demo, vuoto, migra, unisci, calc, eur, eur0, dl, ds, ml, ms, parseImporto, parseLink, nuovaDaLink, daTesto, CATEGORIE };
 })();
 /* ================= FINE LOGICA PURA ================= */
 </script>
@@ -507,7 +534,7 @@ const MS = (() => {
   const save = () => { S.mod = Date.now(); saveLocal(); if (window.AvanzoSync) window.AvanzoSync.programma(); };
   const segnaEliminati = (ids) => { S.eliminati = [...(S.eliminati || []), ...ids].slice(-3000); };
 
-  const UI = { tab: 'panoramica', goal: null, sim: { mode: 'quota' }, filtri: { q: '', conto: '', cat: '', tipo: '' } };
+  const UI = { tel: /android/i.test(navigator.userAgent) ? 'android' : 'iphone', tab: 'panoramica', goal: null, sim: { mode: 'quota' }, filtri: { q: '', conto: '', cat: '', tipo: '' } };
   try { UI.tab = localStorage.getItem(KEY + '.tab') || 'panoramica'; } catch (e) {}
   const TABS = [['panoramica', 'Panoramica'], ['stipendio', 'Fino allo stipendio'], ['budget', 'Budget'], ['analisi', 'Analisi spese'], ['ottimizza', 'Ottimizzazione'], ['movimenti', 'Movimenti'], ['impostazioni', 'Impostazioni']];
 
@@ -591,6 +618,7 @@ const MS = (() => {
     $('who').textContent = S.impostazioni.nome ? S.impostazioni.nome : '';
     if (typeof mostraStato === 'function' && Sync.user) mostraStato();
     $('demoBar').hidden = !S.demo;
+    $('loginBtn').hidden = !SB || !!Sync.user;
     const sera = C.prev[C.prev.length - 2] || C.prev[0];
     $('hero').innerHTML = `
       <div class="hero-main"><span class="lbl">Puoi spendere davvero fino allo stipendio</span><span class="big">${esc(eur0(Math.max(0, C.spendibile)))}</span><span class="sub">${C.spendibile > 0 ? `circa ${esc(eur0(C.spendibile / C.giorni))} al giorno per ${C.giorni} ${C.giorni === 1 ? 'giorno' : 'giorni'} · stipendio il ${esc(dl(C.pay))}` : 'Le scadenze e le spese necessarie superano la liquidità: guarda "Fino allo stipendio"'}</span><button class="hlink" id="howBtn">Come si calcola</button></div>
@@ -790,7 +818,8 @@ const MS = (() => {
     const I = S.impostazioni;
     const acc = V.account ? V.account() : ''; const base = NATIVE ? `${SCHEME}://` : location.href.split('#')[0].split('?')[0] + '#';
     const tpl = `${base}nuova?importo=[Importo]&descrizione=[Esercente]&conto=[Carta]&fonte=iphone&salva=1`;
-    const tplA = `${base}nuova?importo=%importo&descrizione=%esercente&fonte=android&salva=1`;
+    const tplA = `${base}nuova?titolo={not_title}&testo={notification}&fonte=android&salva=1`;
+    const ultimoTel = S.movimenti.filter((m) => ['iphone', 'android', 'telefono'].includes(m.fonte)).sort((x, y) => (y.data + (y.id || '')).localeCompare(x.data + (x.id || '')))[0];
     const catOpts = (sel) => S.categorie.filter((c) => c.natura !== 'trasferimento').map((c) => `<option ${c.nome === sel ? 'selected' : ''}>${esc(c.nome)}</option>`).join('');
     const contoOpts = (sel, any) => (any ? '<option value="">—</option>' : '') + S.conti.map((c) => `<option value="${esc(c.id)}" ${c.id === sel ? 'selected' : ''}>${esc(c.nome)}</option>`).join('');
     return `${acc}
@@ -801,19 +830,32 @@ const MS = (() => {
           <div class="two"><label class="f" for="pStip">Stipendio netto (€)<input id="pStip" data-set="stipendio" type="number" inputmode="decimal" value="${I.stipendio}"></label><label class="f" for="pGiorno">Giorno dello stipendio<input id="pGiorno" data-set="giornoStipendio" type="number" min="1" max="31" value="${I.giornoStipendio}"></label></div>
           <div class="two"><label class="f" for="pObi">Risparmio mensile obiettivo (€)<input id="pObi" data-set="obiettivoRisparmio" type="number" inputmode="decimal" value="${I.obiettivoRisparmio}"></label><label class="f" for="pFondoObi">Fondo emergenze, obiettivo (€)<input id="pFondoObi" data-set="fondoObiettivo" type="number" inputmode="decimal" value="${I.fondoObiettivo}"></label></div>
           <div class="two"><label class="f" for="pFondoC">Conto del fondo<select id="pFondoC" data-set="contoFondo">${contoOpts(I.contoFondo, true)}</select></label><label class="f" for="pQuota">Quota mensile al fondo (€)<input id="pQuota" data-set="quotaFondo" type="number" inputmode="decimal" value="${I.quotaFondo}"></label></div>
-          <label class="f" for="pDef">Conto predefinito per il telefono<select id="pDef" data-set="contoPredefinito">${contoOpts(I.contoPredefinito)}</select></label>
         </div></div>
-      <div class="card" id="phone"><h2>Collega il telefono</h2><p class="note">Ogni pagamento può arrivare qui da solo, aprendo un link con importo ed esercente</p>
-        <h3 style="font-size:15px;margin:8px 0 6px">iPhone (Comandi)</h3>
-        <ol class="steps"><li>Apri <b>Comandi</b> › <b>Automazione</b> › <b>+</b> › <b>Transazione</b>.</li><li>Scegli le carte di Wallet da seguire e <b>Esegui immediatamente</b>.</li><li>Aggiungi l'azione <b>URL</b> con il link qui sotto, inserendo al posto di [Importo], [Esercente] e [Carta] le variabili della transazione.</li><li>Aggiungi l'azione <b>Apri URL</b>: si apre Avanzo e la transazione è salvata.</li></ol>
-        <div class="code" id="tplI" style="margin:10px 0 6px">${esc(tpl)}</div><button class="btn ghost small" data-copy="tplI">Copia il link</button>
-        ${NATIVE ? '' : '<p class="hint">Versione web: su iPhone usala dentro Safari, perché le app aggiunte alla schermata Home hanno una memoria separata. Con l\'app scaricata dallo store questo limite non c\'è.</p>'}
-        <h3 style="font-size:15px;margin:14px 0 6px">Android (MacroDroid o Tasker)</h3>
-        <ol class="steps"><li>Crea una macro con trigger <b>Notifica ricevuta</b> dall'app della tua banca o di Google Wallet.</li><li>Salva il testo della notifica in variabili: importo (cerca <span class="code" style="display:inline;padding:0 4px">\\d+[.,]\\d{2}</span>) ed esercente.</li><li>Aggiungi l'azione <b>Apri sito web</b> con il link qui sotto, sostituendo le variabili.</li></ol>
-        <div class="code" id="tplA" style="margin:10px 0 6px">${esc(tplA)}</div><button class="btn ghost small" data-copy="tplA">Copia il link</button>
-        <p class="hint">Senza <b>salva=1</b> il link apre il modulo già compilato da confermare. Le transazioni senza categoria finiscono in "Da classificare"; quando le correggi, Avanzo impara la categoria per quell'esercente.</p>
-        <h3 style="font-size:15px;margin:14px 0 6px">Prova un link</h3>
-        <div class="controls"><label class="f" for="testLink" style="flex:3 1 16rem">Incolla un link di prova<input id="testLink" value="${esc(base)}nuova?importo=4,20&descrizione=Bar Centrale&fonte=iphone&salva=1"></label><button class="btn" id="testGo">Prova</button></div>
+      <div class="card" id="phone"><h2>Pagamenti automatici</h2>
+        <p class="note" style="margin-bottom:12px">Quando paghi con il telefono, la spesa arriva in Avanzo da sola. Si imposta una volta, in due minuti.</p>
+        <div class="seg" role="tablist" aria-label="Il tuo telefono"><button role="tab" class="${UI.tel === 'iphone' ? 'on' : ''}" data-tel="iphone" aria-selected="${UI.tel === 'iphone'}">iPhone</button><button role="tab" class="${UI.tel === 'android' ? 'on' : ''}" data-tel="android" aria-selected="${UI.tel === 'android'}">Android</button></div>
+        ${UI.tel === 'iphone' ? `
+        <ol class="guida">
+          <li><b>Copia il link</b><div class="code" id="tplI">${esc(tpl)}</div><button class="btn small" data-copy="tplI">Copia il link</button></li>
+          <li><b>Apri l'app Comandi</b>, tocca <b>Automazione</b> in basso, poi <b>+</b> e scegli <b>Transazione</b>.</li>
+          <li><b>Scegli le carte</b> che usi con Apple Pay, seleziona <b>Esegui immediatamente</b> e tocca <b>Avanti</b>.</li>
+          <li>Tocca <b>Nuova automazione vuota</b>, cerca l'azione <b>Apri URL</b> e incolla il link nel campo.</li>
+          <li><b>Sostituisci le tre parole tra parentesi</b>: tocca <b>[Importo]</b>, cancellalo e scegli la variabile <b>Importo</b> dalla barra sopra la tastiera. Fai lo stesso con <b>[Esercente]</b> → Esercente e <b>[Carta]</b> → Carta. Tocca <b>Fine</b>.</li>
+        </ol>
+        ${NATIVE ? '' : `<p class="hint">Il link si apre in Safari: entra con la tua email anche lì, così la spesa arriva in tutti i tuoi dispositivi.</p>`}` : `
+        <ol class="guida">
+          <li><b>Installa MacroDroid</b> (gratis) dal Play Store e aprilo.</li>
+          <li><b>Copia il link</b><div class="code" id="tplA">${esc(tplA)}</div><button class="btn small" data-copy="tplA">Copia il link</button></li>
+          <li>Tocca <b>Aggiungi macro</b>. Come <b>attivatore</b> scegli <b>Notifica</b> › <b>Notifica ricevuta</b> e seleziona l'app della tua banca o Google Wallet.</li>
+          <li>Come <b>azione</b> scegli <b>Applicazioni</b> › <b>Apri sito web</b> e incolla il link. Salva la macro.</li>
+        </ol>
+        <p class="hint">Non serve altro: Avanzo legge da solo importo ed esercente dal testo della notifica.</p>`}
+        <div class="check"><b>Funziona?</b> ${ultimoTel ? `Ultima spesa arrivata dal telefono: <b>${esc(eur(Math.abs(ultimoTel.importo)))}</b> · ${esc(ultimoTel.descrizione)} · ${esc(dl(ultimoTel.data))}` : 'Fai un pagamento con il telefono: la spesa comparirà qui e tra i Movimenti.'}</div>
+        <details class="adv"><summary>Altre opzioni</summary>
+          <label class="f" for="pDef">Conto da usare quando la carta non si riconosce<select id="pDef" data-set="contoPredefinito">${contoOpts(I.contoPredefinito)}</select></label>
+          <p class="hint">Le spese senza categoria finiscono in "Da classificare": quando le correggi, Avanzo impara la categoria per quell'esercente. Togliendo <b>&amp;salva=1</b> dal link, Avanzo ti mostra la spesa da confermare invece di salvarla subito.</p>
+          <div class="controls"><label class="f" for="testLink" style="flex:3 1 16rem">Prova un link<input id="testLink" value="${esc(base)}nuova?importo=4,20&descrizione=Bar Centrale&fonte=iphone&salva=1"></label><button class="btn ghost" id="testGo">Prova</button></div>
+        </details>
       </div>
     </div>
     <div class="grid">
@@ -893,6 +935,7 @@ const MS = (() => {
     document.querySelectorAll('[data-new]').forEach((b) => b.addEventListener('click', () => openEditor(b.dataset.new, -1)));
     document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => copy($(b.dataset.copy).textContent, $(b.dataset.copy))));
     $('testGo').onclick = () => handleLink($('testLink').value, true);
+    document.querySelectorAll('[data-tel]').forEach((b) => b.addEventListener('click', () => { UI.tel = b.dataset.tel; const y = scrollY; render(); scrollTo(0, y); }));
     const json = () => JSON.stringify(S);
     $('bkCopy').onclick = () => copy(json(), null, 'Backup copiato: incollalo in una nota o in un file.');
     $('bkDown').onclick = () => { if (NATIVE && Cap.Plugins.Share) { Cap.Plugins.Share.share({ title: 'Backup Avanzo', text: json() }).catch(() => {}); return; } try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([json()], { type: 'application/json' })); a.download = `avanzo-backup-${iso(new Date())}.json`; document.body.appendChild(a); a.click(); a.remove(); toast('Download avviato. Se non parte, usa "Copia il backup".'); } catch (e) { toast('Download non disponibile qui: usa "Copia il backup".'); } };
@@ -971,8 +1014,13 @@ const MS = (() => {
     } else { openForm(m, true); if (!test) { S.importati.push(L.chiave); save(); } }
     return true;
   }
+  function apriAccesso() {
+    goTo('impostazioni', 'accountCard');
+    setTimeout(() => { const f = document.getElementById('acEmail'); if (f) f.focus(); }, 350);
+  }
   function fromUrl() {
     const href = location.href;
+    if (/#accedi\b/.test(href)) { try { history.replaceState(null, '', location.pathname); } catch (e) {} if (!Sync.user) apriAccesso(); return; }
     if (handleLink(href, false)) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
   }
 
@@ -1122,6 +1170,7 @@ const MS = (() => {
 
   /* ---------- avvio ---------- */
   $('tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (!b) return; UI.tab = b.dataset.tab; try { localStorage.setItem(KEY + '.tab', UI.tab); } catch (er) {} render(); });
+  $('loginBtn').onclick = apriAccesso;
   $('startOwn').onclick = () => {
     if (!SB || Sync.plus) { S = vuoto(); save(); UI.tab = 'impostazioni'; render(); toast('Inizia da profilo, conti e scadenze. Poi aggiungi le transazioni con il tasto +.'); return; }
     goTo('impostazioni', 'accountCard'); toast(Sync.user ? 'Attiva Plus per usare i tuoi conti.' : 'Entra con la tua email: con Plus usi Avanzo con i tuoi conti.');
@@ -1136,7 +1185,7 @@ const MS = (() => {
     if (SB) {
       SB.auth.onAuthStateChange((ev, session) => { if (ev === 'SIGNED_OUT') { Sync.user = null; mostraStato(); } else if (ev === 'SIGNED_IN' && session && session.user && (!Sync.user || Sync.user.id !== session.user.id)) { Sync.emailInviata = ''; setTimeout(() => { if (Sync.user && Sync.user.id === session.user.id) return; accesso(session.user).then(() => toast(Sync.plus ? 'Accesso fatto: i tuoi dati ora sono salvati nel tuo account.' : 'Accesso fatto. Attiva Plus per usare i tuoi conti.')); }, 0); } });
       let sess = null; try { const { data } = await SB.auth.getSession(); sess = data && data.session; } catch (e) {}
-      if (sess && sess.user) await accesso(sess.user); else { soloDemo(); render(); }
+      if (sess && sess.user) await accesso(sess.user); else { soloDemo(); render(); if (/#accedi\b/.test(location.href)) fromUrl(); }
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') aggiorna(); });
       addEventListener('online', () => programma());
     }
