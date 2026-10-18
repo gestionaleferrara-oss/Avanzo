@@ -172,7 +172,7 @@ span.cchip { min-height: 0; padding: 3px 10px; font-size: 12px; line-height: 1.4
     <div class="brand"><svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12" fill="none" stroke="var(--accent)" stroke-width="2.5"></circle><path d="M14 2a12 12 0 0 1 0 24" fill="var(--accent)"></path></svg>Avanzo</div>
     <div class="who" id="who"></div>
   </header>
-  <div id="demoBar" class="demo-bar" hidden><span><b>Dati di esempio.</b> Chiara è una persona inventata: prova pure a modificare o aggiungere transazioni.</span><button class="btn small" id="startOwn">Inizia con i miei dati</button></div>
+  <div id="demoBar" class="demo-bar" hidden><span><b>Questa è la demo.</b> Chiara è una persona inventata: prova pure tutto. Per usare Avanzo con i tuoi conti serve Plus.</span><button class="btn small" id="startOwn">Usa i miei conti</button></div>
   <section class="hero" id="hero"></section>
   <nav class="tabs" role="tablist" aria-label="Sezioni" id="tabs"></nav>
   <main id="view"></main>
@@ -836,7 +836,7 @@ const MS = (() => {
         return `<div class="grp"><div class="grp-h"><b>${t}</b> · ${d}</div><div class="chips">${xs.map(([c, i]) => `<button class="cchip" data-ed="categorie" data-i="${i}">${esc(c.nome)}</button>`).join('') || '<span class="note">nessuna</span>'}</div></div>`;
       }).join('')}
     </div>
-    <div class="card"><h2>Backup e dati</h2><p class="note">I dati vivono solo in questo browser: fai un backup ogni tanto</p>
+    <div class="card"><h2>Backup e dati</h2><p class="note">${Sync.plus ? 'I dati sono salvati nel tuo account: il backup è una copia in più, se la vuoi.' : 'In demo i dati restano solo in questo browser.'}</p>
       <div class="controls"><button class="btn" id="bkCopy">Copia il backup</button><button class="btn ghost" id="bkDown">${NATIVE ? "Condividi il backup" : "Scarica il backup"}</button><label class="btn ghost" for="bkFile" style="display:inline-flex;align-items:center">Ripristina da file<input id="bkFile" type="file" accept="application/json,.json" hidden></label></div>
       <label class="f" for="bkPaste">Oppure incolla qui un backup e premi Ripristina<textarea id="bkPaste"></textarea></label>
       <div class="controls" style="margin-top:10px"><button class="btn ghost" id="bkRestore">Ripristina</button><button class="btn ghost" id="loadDemo">Carica i dati di esempio</button><button class="btn danger" id="wipe">Cancella tutto</button></div>
@@ -979,7 +979,28 @@ const MS = (() => {
   /* ---------- account e sincronizzazione (Supabase) ---------- */
   const CFG = window.AVANZO_CONFIG || {};
   const SB = CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'avanzo.auth' } }) : null;
-  const Sync = { user: null, versione: 0, stato: 'off', ultimo: null, timer: null, busy: false, again: false, emailInviata: '' };
+  const Sync = { user: null, versione: 0, stato: 'off', ultimo: null, timer: null, busy: false, again: false, emailInviata: '', piano: null, plus: false };
+  const NOMI_PIANO = { plus_mese: 'Plus mensile', plus_anno: 'Plus annuale', plus_vita: 'Plus a vita' };
+  const MIO = KEY + '.mio';
+  // I dati personali di chi non ha (o non ha più) Plus restano da parte, non si perdono.
+  function conserva() { if (S.demo) return; try { localStorage.setItem(MIO, JSON.stringify(S)); } catch (e) {} if (Pref) Pref.set({ key: MIO, value: JSON.stringify(S) }).catch(() => {}); }
+  async function recupera() {
+    let txt = null; try { txt = localStorage.getItem(MIO); } catch (e) {}
+    if (!txt && Pref) { try { const r = await Pref.get({ key: MIO }); txt = r && r.value; } catch (e) {} }
+    try { localStorage.removeItem(MIO); } catch (e) {} if (Pref) Pref.remove({ key: MIO }).catch(() => {});
+    try { const d = JSON.parse(txt || 'null'); return d && d.v ? migra(d) : null; } catch (e) { return null; }
+  }
+  function soloDemo() { if (S.demo) return; conserva(); S = demo(today()); saveLocal(); }
+  async function leggiPiano() {
+    const { data, error } = await SB.from('piani').select('piano, valido_fino').eq('user_id', Sync.user.id).maybeSingle();
+    if (error) throw error;
+    Sync.piano = data && data.piano !== 'gratis' && (!data.valido_fino || new Date(data.valido_fino) > new Date()) ? data.piano : null;
+    Sync.plus = !!Sync.piano;
+    try { localStorage.setItem(KEY + '.piano', JSON.stringify({ u: Sync.user.id, p: Sync.piano })); } catch (e) {}
+    return Sync.plus;
+  }
+  function pianoRicordato() { try { const c = JSON.parse(localStorage.getItem(KEY + '.piano') || 'null'); if (c && c.u === Sync.user.id && c.p) { Sync.piano = c.p; Sync.plus = true; } } catch (e) {} }
+  const linkPagamento = () => CFG.pagamentoFondatore ? CFG.pagamentoFondatore + (Sync.user && Sync.user.email ? '?prefilled_email=' + encodeURIComponent(Sync.user.email) : '') : '';
   const statoTesto = () => Sync.stato === 'ok' ? `Sincronizzato alle ${new Date(Sync.ultimo).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}` : Sync.stato === 'invio' ? 'Sincronizzazione in corso…' : Sync.stato === 'errore' ? 'Non sincronizzato: riprovo appena possibile' : Sync.stato === 'offline' ? 'Offline: sincronizzo appena torna la rete' : '';
   function mostraStato() {
     const el = document.getElementById('syncStato'); if (el) el.textContent = statoTesto();
@@ -990,7 +1011,7 @@ const MS = (() => {
     if (error) throw error; return data;
   }
   async function invia() {
-    if (!SB || !Sync.user) return;
+    if (!SB || !Sync.user || !Sync.plus) return;
     if (Sync.busy) { Sync.again = true; return; }
     if (!navigator.onLine) { Sync.stato = 'offline'; mostraStato(); return; }
     Sync.busy = true; Sync.stato = 'invio'; mostraStato();
@@ -1013,15 +1034,23 @@ const MS = (() => {
     } catch (e) { Sync.stato = 'errore'; console.warn('sync', e); setTimeout(programma, 15000); }
     finally { Sync.busy = false; mostraStato(); if (Sync.again) { Sync.again = false; programma(); } }
   }
-  function programma() { if (!Sync.user) return; clearTimeout(Sync.timer); Sync.timer = setTimeout(invia, 1200); }
+  function programma() { if (!Sync.user || !Sync.plus) return; clearTimeout(Sync.timer); Sync.timer = setTimeout(invia, 1200); }
   async function aggiorna() {
     if (!SB || !Sync.user || Sync.busy || !navigator.onLine) return;
+    if (!Sync.plus) { try { if (await leggiPiano()) { await avviaSync(); render(); toast('Plus è attivo: ora puoi usare Avanzo con i tuoi conti.'); } } catch (e) {} return; }
     try { const r = await leggiRemoto(); if (r && r.versione > Sync.versione) { S = unisci(S, r.dati); Sync.versione = r.versione; saveLocal(); render(); } Sync.stato = 'ok'; Sync.ultimo = Date.now(); mostraStato(); } catch (e) { Sync.stato = 'errore'; mostraStato(); }
   }
   async function accesso(user) {
     if (Sync.user && Sync.user.id === user.id) return;
     Sync.user = user; Sync.stato = 'invio'; mostraStato();
+    try { await leggiPiano(); } catch (e) { Sync.plus = false; Sync.piano = null; pianoRicordato(); }
+    if (!Sync.plus) { Sync.stato = 'off'; soloDemo(); render(); return; }
+    await avviaSync();
+  }
+  async function avviaSync() {
+    const user = Sync.user; Sync.stato = 'invio'; mostraStato();
     try {
+      if (S.demo) { const m = await recupera(); if (m) S = m; }
       const r = await leggiRemoto();
       if (!r) { if (S.demo) S = vuoto(); Sync.versione = 0; }
       else if (S.demo) { S = migra(r.dati); Sync.versione = r.versione; }
@@ -1033,23 +1062,37 @@ const MS = (() => {
   async function uscita() {
     clearTimeout(Sync.timer);
     if (SB) await SB.auth.signOut().catch(() => {});
-    Sync.user = null; Sync.versione = 0; Sync.stato = 'off';
-    S = vuoto(); saveLocal(); render(); toast('Sei uscito. I tuoi dati restano salvati nel tuo account.');
+    const eraPlus = Sync.plus; try { localStorage.removeItem(KEY + '.piano'); } catch (e) {} Sync.user = null; Sync.versione = 0; Sync.stato = 'off'; Sync.plus = false; Sync.piano = null;
+    S = demo(today()); saveLocal(); UI.tab = 'panoramica'; render(); toast(eraPlus ? 'Sei uscito. I tuoi dati restano salvati nel tuo account.' : 'Sei uscito.');
   }
   window.AvanzoSync = { programma };
   V.account = () => {
     if (!SB) return '';
-    if (Sync.user) return `<div class="card" style="margin-bottom:14px"><div class="card-head"><h2>Account</h2><button class="btn ghost small" id="acOut">Esci</button></div><p class="note" style="margin:0">Collegato come <b>${esc(Sync.user.email || '')}</b> · <span id="syncStato">${esc(statoTesto())}</span></p></div>`;
-    return `<div class="card" style="margin-bottom:14px"><h2>Account</h2><p class="note">Accedi per salvare i dati in modo sicuro e usarli su più dispositivi. Ti mandiamo un codice via email, nessuna password.</p>
+    const paga = linkPagamento();
+    if (Sync.user && Sync.plus) return `<div class="card" id="accountCard" style="margin-bottom:14px"><div class="card-head"><h2>Account</h2><button class="btn ghost small" id="acOut">Esci</button></div><p class="note" style="margin:0">Collegato come <b>${esc(Sync.user.email || '')}</b> · ${esc(NOMI_PIANO[Sync.piano] || 'Plus')} · <span id="syncStato">${esc(statoTesto())}</span></p></div>`;
+    if (Sync.user) return `<div class="card" id="accountCard" style="margin-bottom:14px"><div class="card-head"><h2>Account</h2><button class="btn ghost small" id="acOut">Esci</button></div>
+      <p class="note">Collegato come <b>${esc(Sync.user.email || '')}</b>. Plus non è ancora attivo su questo account: per ora vedi la demo.</p>
+      <p style="margin:0 0 12px">Con il prezzo fondatore hai Avanzo Plus per sempre con un solo pagamento: <b>49,99 €</b> invece di 69,99 €. Al pagamento usa questa stessa email.</p>
+      <div class="controls" style="margin:0">${paga ? `<a class="btn" href="${esc(paga)}" target="_blank" rel="noopener">Diventa fondatore – 49,99 €</a>` : ''}<button class="btn ghost" id="acCheck">Ho già pagato, ricontrolla</button></div>
+      <p class="hint" id="acErr" role="alert"></p></div>`;
+    return `<div class="card" id="accountCard" style="margin-bottom:14px"><h2>Account</h2><p class="note">Entra con la tua email per usare Avanzo con i tuoi conti, su tutti i tuoi dispositivi. Serve Plus. Ti mandiamo un codice, nessuna password.</p>
       <div class="controls" style="margin:0">${Sync.emailInviata
         ? `<p class="note" style="flex:1 1 100%;margin:0">Ti abbiamo scritto a <b>${esc(Sync.emailInviata)}</b>: tocca il link nell'email oppure scrivi qui il codice, se c'è.</p><label class="f" for="acCode">Codice<input id="acCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></label><button class="btn" id="acVerify">Accedi</button><button class="btn ghost" id="acBack">Cambia email</button>`
         : `<label class="f" for="acEmail" style="flex:2 1 14rem">Email<input id="acEmail" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></label><button class="btn" id="acSend">Inviami il codice</button>`}</div>
-      <p class="hint" id="acErr" role="alert"></p></div>`;
+      <p class="hint" id="acErr" role="alert"></p>${paga ? `<p class="note" style="margin:8px 0 0">Non hai ancora Plus? <a href="${esc(paga)}" target="_blank" rel="noopener">Diventa fondatore a 49,99 €</a>, poi entra con la stessa email.</p>` : ''}</div>`;
   };
   after.account = () => {
     if (!SB) return;
     const err = (m) => { const e = document.getElementById('acErr'); if (e) e.textContent = m; };
     const out = document.getElementById('acOut'); if (out) out.onclick = uscita;
+    const chk = document.getElementById('acCheck');
+    if (chk) chk.onclick = async () => {
+      chk.disabled = true; err('');
+      let ok = false; try { ok = await leggiPiano(); } catch (e) {}
+      chk.disabled = false;
+      if (!ok) return err('Non troviamo ancora il pagamento. Di solito arriva entro un minuto: controlla di aver usato la stessa email, oppure scrivi a ciao@avanzo.me.');
+      await avviaSync(); render(); toast('Plus è attivo: ora puoi usare Avanzo con i tuoi conti.');
+    };
     const send = document.getElementById('acSend');
     if (send) send.onclick = async () => {
       const email = $('acEmail').value.trim().toLowerCase();
@@ -1072,14 +1115,17 @@ const MS = (() => {
       const { data, error } = await SB.auth.verifyOtp({ email: Sync.emailInviata, token, type: 'email' });
       ver.disabled = false;
       if (error || !data.user) return err('Codice non valido o scaduto. Chiedine uno nuovo.');
-      Sync.emailInviata = ''; await accesso(data.user); toast('Accesso fatto: i tuoi dati ora sono salvati nel tuo account.');
+      Sync.emailInviata = ''; await accesso(data.user); toast(Sync.plus ? 'Accesso fatto: i tuoi dati ora sono salvati nel tuo account.' : 'Accesso fatto. Attiva Plus per usare i tuoi conti.');
     };
     const back = document.getElementById('acBack'); if (back) back.onclick = () => { Sync.emailInviata = ''; render(); };
   };
 
   /* ---------- avvio ---------- */
   $('tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (!b) return; UI.tab = b.dataset.tab; try { localStorage.setItem(KEY + '.tab', UI.tab); } catch (er) {} render(); });
-  $('startOwn').onclick = () => { S = vuoto(); save(); UI.tab = 'impostazioni'; render(); toast('Inizia da profilo, conti e scadenze. Poi aggiungi le transazioni con il tasto +.'); };
+  $('startOwn').onclick = () => {
+    if (!SB || Sync.plus) { S = vuoto(); save(); UI.tab = 'impostazioni'; render(); toast('Inizia da profilo, conti e scadenze. Poi aggiungi le transazioni con il tasto +.'); return; }
+    goTo('impostazioni', 'accountCard'); toast(Sync.user ? 'Attiva Plus per usare i tuoi conti.' : 'Entra con la tua email: con Plus usi Avanzo con i tuoi conti.');
+  };
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 150); });
   if (!TABS.some(([id]) => id === UI.tab)) UI.tab = 'panoramica';
   async function boot() {
@@ -1088,8 +1134,9 @@ const MS = (() => {
     }
     saveLocal(); render(); fromUrl();
     if (SB) {
-      SB.auth.onAuthStateChange((ev, session) => { if (ev === 'SIGNED_OUT') { Sync.user = null; mostraStato(); } else if (ev === 'SIGNED_IN' && session && session.user && (!Sync.user || Sync.user.id !== session.user.id)) { Sync.emailInviata = ''; setTimeout(() => { if (Sync.user && Sync.user.id === session.user.id) return; accesso(session.user).then(() => toast('Accesso fatto: i tuoi dati ora sono salvati nel tuo account.')); }, 0); } });
-      try { const { data } = await SB.auth.getSession(); if (data && data.session && data.session.user) await accesso(data.session.user); } catch (e) {}
+      SB.auth.onAuthStateChange((ev, session) => { if (ev === 'SIGNED_OUT') { Sync.user = null; mostraStato(); } else if (ev === 'SIGNED_IN' && session && session.user && (!Sync.user || Sync.user.id !== session.user.id)) { Sync.emailInviata = ''; setTimeout(() => { if (Sync.user && Sync.user.id === session.user.id) return; accesso(session.user).then(() => toast(Sync.plus ? 'Accesso fatto: i tuoi dati ora sono salvati nel tuo account.' : 'Accesso fatto. Attiva Plus per usare i tuoi conti.')); }, 0); } });
+      let sess = null; try { const { data } = await SB.auth.getSession(); sess = data && data.session; } catch (e) {}
+      if (sess && sess.user) await accesso(sess.user); else { soloDemo(); render(); }
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') aggiorna(); });
       addEventListener('online', () => programma());
     }
