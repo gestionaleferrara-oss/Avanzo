@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quanto posso spendere fino allo stipendio? Calcolatore gratuito – Avanzo</title>
+<meta name="description" content="Calcola in 30 secondi quanto puoi spendere ogni giorno fino al prossimo stipendio, togliendo bollette, rate e spese essenziali. Gratis, senza registrazione.">
+<link rel="canonical" href="https://avanzo.me/quanto-posso-spendere/">
+<meta property="og:title" content="Quanto posso spendere fino allo stipendio?">
+<meta property="og:description" content="Il calcolatore gratuito che ti dice quanto puoi spendere al giorno fino allo stipendio, tolte bollette, rate e spese essenziali.">
+<meta property="og:url" content="https://avanzo.me/quanto-posso-spendere/">
+<meta property="og:type" content="website">
+<link rel="icon" href="../icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Come si calcola quanto posso spendere fino allo stipendio?","acceptedAnswer":{"@type":"Answer","text":"Prendi i soldi che hai oggi, togli le bollette e le rate che scadono prima dello stipendio, togli le spese essenziali (spesa, trasporti) per i giorni che mancano e la quota che vuoi mettere da parte. Quello che resta, diviso per i giorni che mancano, è quanto puoi spendere al giorno."}},
+{"@type":"Question","name":"Cosa conta come spesa essenziale?","acceptedAnswer":{"@type":"Answer","text":"Le spese che farai comunque: spesa alimentare, trasporti per andare al lavoro, farmaci. Ristoranti, abbigliamento e svago invece si pagano con la cifra che resta."}},
+{"@type":"Question","name":"E se il risultato è negativo?","acceptedAnswer":{"@type":"Answer","text":"Significa che con le spese previste non arrivi allo stipendio. Conviene rimandare le spese non necessarie, spostare una scadenza se possibile o ridurre la quota di risparmio di questo mese."}}
+]}
+</script>
+<style>
+:root { --bg: #F3F5F2; --ink: #10231F; --muted: #55665F; --soft: #34463F; --line: #D5DDD8; --panel: #FFFFFF; --accent: #0E5A4D; --sun: #F2C14E; --bad: #B3261E;
+  --display: 'Bricolage Grotesque', 'Avenir Next', system-ui, sans-serif; --body: 'IBM Plex Sans', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace; }
+* { box-sizing: border-box }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55 }
+a { color: var(--accent) }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)) }
+header { padding-block: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap }
+.brand { display: flex; gap: 10px; align-items: center; text-decoration: none; color: var(--ink); font-family: var(--display); font-weight: 700; font-size: 22px }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 12px 20px; border-radius: 12px; font-weight: 600; text-decoration: none; border: 0; font: inherit; cursor: pointer }
+.btn.dark { background: var(--ink); color: #F3F5F2 } .btn.green { background: var(--accent); color: #FFFFFF } .btn.line { border: 1.5px solid var(--ink); color: var(--ink); background: transparent }
+h1 { font-family: var(--display); font-size: clamp(34px, 6vw, 54px); line-height: 1.04; letter-spacing: -0.02em; margin: 28px 0 14px; text-wrap: balance; max-width: 18em }
+.lead { font-size: 19px; color: var(--soft); max-width: 36em; margin: 0 0 32px }
+.calc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start }
+@media (max-width: 860px) { .calc { grid-template-columns: minmax(0, 1fr) } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 24px }
+form { display: grid; gap: 16px }
+label { display: grid; gap: 6px; font-weight: 600; font-size: 15px }
+label small { font-weight: 400; color: var(--muted); font-size: 14px }
+.in { display: flex; align-items: center; border: 1.5px solid #B9C7C1; border-radius: 12px; background: #F7F9F7; overflow: hidden }
+.in:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent) }
+.in span { padding: 0 12px; color: var(--muted); font-family: var(--mono) }
+.in input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-family: var(--mono); font-size: 18px; padding: 12px 12px 12px 0; color: var(--ink) }
+.in input:focus { outline: none }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px }
+@media (max-width: 420px) { .two { grid-template-columns: minmax(0, 1fr) } }
+.res { background: var(--accent); color: #FFFFFF; border: 0; position: sticky; top: max(16px, env(safe-area-inset-top, 0px)) }
+.res .lbl { font-size: 15px; color: #CFE3DB }
+.res .big { font-family: var(--mono); font-size: clamp(44px, 9vw, 64px); font-weight: 500; line-height: 1.1; display: block; margin: 4px 0 }
+.res .sub { color: #CFE3DB; font-size: 15px }
+.res.neg { background: #5B1A15 }
+.rows { display: grid; gap: 8px; margin: 18px 0 0; padding: 16px 0 0; border-top: 1px solid rgba(255,255,255,.2); font-size: 15px }
+.rows div { display: flex; justify-content: space-between; gap: 12px } .rows b { font-family: var(--mono); font-weight: 500 }
+.cta { margin-top: 18px; background: rgba(255,255,255,.1); border-radius: 14px; padding: 14px; font-size: 15px; display: grid; gap: 10px }
+.cta .btn { background: var(--sun); color: var(--ink); justify-self: start }
+section.txt { max-width: 42em; margin: 56px 0 }
+section.txt h2 { font-family: var(--display); font-size: 30px; letter-spacing: -0.01em; margin: 0 0 12px }
+section.txt h3 { font-size: 18px; margin: 24px 0 6px }
+section.txt p { color: var(--soft); margin: 0 0 12px }
+.ex { font-family: var(--mono); font-size: 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 4px }
+footer { padding-block: 32px 48px; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); margin-top: 40px }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="../"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12" fill="none" stroke="#0E5A4D" stroke-width="2.5"></circle><path d="M14 2a12 12 0 0 1 0 24" fill="#F2C14E"></path></svg>Avanzo</a>
+    <a class="btn dark" href="../app/">Prova l'app</a>
+  </header>
+
+  <h1>Quanto posso spendere fino allo stipendio?</h1>
+  <p class="lead">Scrivi quanto hai oggi e cosa devi ancora pagare: il calcolatore ti dice quanto puoi spendere ogni giorno senza arrivare a secco. Gratis, senza registrazione, i numeri restano nel tuo browser.</p>
+
+  <div class="calc">
+    <div class="card">
+      <form id="f" novalidate>
+        <label for="saldo">Quanto hai oggi sui conti <small>Conto corrente, carte e contanti, senza i risparmi che non vuoi toccare</small>
+          <div class="in"><span>€</span><input id="saldo" inputmode="decimal" value="1.250"></div></label>
+        <div class="two">
+          <label for="giorno">Giorno dello stipendio <small>Per esempio 27</small>
+            <div class="in"><input id="giorno" inputmode="numeric" value="27" style="padding-left:12px"></div></label>
+          <label for="giorni">Giorni che mancano <small>Calcolati da soli</small>
+            <div class="in"><input id="giorni" readonly tabindex="-1" style="padding-left:12px"></div></label>
+        </div>
+        <label for="scad">Bollette e rate da pagare prima dello stipendio <small>Affitto, luce, gas, telefono, finanziamenti…</small>
+          <div class="in"><span>€</span><input id="scad" inputmode="decimal" value="320"></div></label>
+        <label for="ess">Spese essenziali a settimana <small>Spesa alimentare, trasporti, farmaci</small>
+          <div class="in"><span>€</span><input id="ess" inputmode="decimal" value="90"></div></label>
+        <label for="ris">Quanto vuoi mettere da parte questo mese <small>Anche 0: puoi cambiarlo dopo</small>
+          <div class="in"><span>€</span><input id="ris" inputmode="decimal" value="100"></div></label>
+      </form>
+    </div>
+
+    <div class="card res" id="res" aria-live="polite">
+      <span class="lbl">Puoi spendere al giorno</span>
+      <span class="big" id="out">—</span>
+      <span class="sub" id="outSub"></span>
+      <div class="rows">
+        <div><span>Hai oggi</span><b id="rSaldo"></b></div>
+        <div><span>Bollette e rate</span><b id="rScad"></b></div>
+        <div><span>Spese essenziali fino allo stipendio</span><b id="rEss"></b></div>
+        <div><span>Da mettere da parte</span><b id="rRis"></b></div>
+        <div><span>Resta per tutto il resto</span><b id="rResto"></b></div>
+      </div>
+      <div class="cta">
+        <span>Avanzo fa questo conto da solo ogni giorno, con le tue spese vere: sai sempre quanto ti resta, senza rifare i calcoli.</span>
+        <a class="btn" href="../?ref=calcolatore">Scopri Avanzo</a>
+      </div>
+    </div>
+  </div>
+
+  <section class="txt">
+    <h2>Come si calcola</h2>
+    <p>Il conto è semplice, ed è lo stesso che fa Avanzo: dai soldi che hai oggi togli tutto quello che pagherai comunque prima dello stipendio. Quello che resta lo dividi per i giorni che mancano.</p>
+    <div class="ex">
+      <span>Soldi di oggi − bollette e rate − spese essenziali − risparmio</span>
+      <span>÷ giorni che mancano allo stipendio</span>
+      <span>= quanto puoi spendere al giorno</span>
+    </div>
+    <h3>Cosa conta come spesa essenziale?</h3>
+    <p>Le spese che farai in ogni caso: la spesa al supermercato, i trasporti per andare al lavoro, i farmaci. Ristoranti, vestiti, abbonamenti e svago no: quelli si pagano con la cifra che resta. Così sai quanto puoi permetterti senza sensi di colpa.</p>
+    <h3>Perché togliere il risparmio subito?</h3>
+    <p>Se metti da parte "quello che avanza", di solito non avanza niente. Togliendo la quota all'inizio, il risparmio diventa una spesa fissa come l'affitto e il resto lo puoi spendere tranquillo.</p>
+    <h3>E se il risultato è negativo?</h3>
+    <p>Vuol dire che con le spese previste non arrivi allo stipendio. Prima di tutto rimanda le spese che non sono necessarie; poi guarda se puoi spostare una scadenza o ridurre per questo mese la quota di risparmio. Meglio saperlo oggi che il giorno 25.</p>
+    <h3>Quanto spesso rifare il conto?</h3>
+    <p>Ogni volta che spendi qualcosa di importante, o almeno una volta a settimana. Avanzo lo aggiorna da solo a ogni spesa che registri, anche quelle che arrivano dal telefono.</p>
+  </section>
+
+  <footer>Avanzo è uno strumento di organizzazione personale e non fornisce consulenza finanziaria. <a href="../privacy.html">Privacy</a> · <a href="../">avanzo.me</a></footer>
+</div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const num = (v) => {
+    let s = String(v || '').replace(/[^\d,.\-]/g, '');
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');      // 1.250,50 → 1250.50
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');  // 1.250 → 1250
+    const n = parseFloat(s); return isNaN(n) ? 0 : n;
+  };
+  const eur = (n) => n.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+  function giorniA(g) {
+    const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+    g = Math.min(31, Math.max(1, Math.round(g) || 27));
+    const fine = (y, m) => new Date(y, m + 1, 0).getDate();
+    let d = new Date(oggi.getFullYear(), oggi.getMonth(), Math.min(g, fine(oggi.getFullYear(), oggi.getMonth())));
+    if (d <= oggi) { const y = oggi.getFullYear(), m = oggi.getMonth() + 1; d = new Date(y, m, Math.min(g, fine(y, m))); }
+    return Math.max(1, Math.round((d - oggi) / 864e5));
+  }
+  const KEY = 'avanzo.calcolatore';
+  $('giorno').value = new Date(Date.now() + 14 * 864e5).getDate(); // esempio: stipendio tra due settimane
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) ['saldo', 'giorno', 'scad', 'ess', 'ris'].forEach((k) => { if (s[k] != null) $(k).value = s[k]; }); } catch (e) {}
+  function calc() {
+    const saldo = num($('saldo').value), g = giorniA(num($('giorno').value)), scad = num($('scad').value), ess = num($('ess').value) / 7 * g, ris = num($('ris').value);
+    $('giorni').value = g;
+    const resto = saldo - scad - ess - ris, giorno = resto / g;
+    $('out').textContent = resto >= 0 ? eur(giorno) : '0 €';
+    $('outSub').textContent = resto >= 0 ? `per ${g} ${g === 1 ? 'giorno' : 'giorni'}: in tutto ${eur(resto)} per ristoranti, svago e imprevisti` : `Ti mancano ${eur(-resto)} per arrivare allo stipendio con queste spese.`;
+    $('res').classList.toggle('neg', resto < 0);
+    $('rSaldo').textContent = eur(saldo); $('rScad').textContent = '− ' + eur(scad); $('rEss').textContent = '− ' + eur(ess); $('rRis').textContent = '− ' + eur(ris); $('rResto').textContent = eur(resto);
+    try { localStorage.setItem(KEY, JSON.stringify({ saldo: $('saldo').value, giorno: $('giorno').value, scad: $('scad').value, ess: $('ess').value, ris: $('ris').value })); } catch (e) {}
+  }
+  $('f').addEventListener('input', calc); $('f').addEventListener('submit', (e) => e.preventDefault()); calc();
+})();
+</script>
+<script src="../app/config.js"></script>
+<script>
+(() => { const C = window.AVANZO_CONFIG || {}; if (!C.supabaseUrl) return; try { if (sessionStorage.getItem('avanzo.visita.calc')) return; sessionStorage.setItem('avanzo.visita.calc', '1'); } catch (e) {}
+  fetch(C.supabaseUrl + '/rest/v1/eventi', { method: 'POST', keepalive: true, headers: { apikey: C.supabaseAnonKey, Authorization: 'Bearer ' + C.supabaseAnonKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ tipo: 'visita', pagina: '/quanto-posso-spendere/', ref: 'calcolatore' }) }).catch(() => {}); })();
+</script>
+</body>
+</html>
