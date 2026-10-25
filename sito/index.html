@@ -67,9 +67,20 @@ a{color:#0E5A4D}a:hover{color:#08362E}
     <div class="wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap">
       <div style="max-width: 46em">
         <div style="font-weight: 700; font-size: 20px; margin-bottom: 4px">Prevendita fondatori: Avanzo Plus a vita a 49,99 € invece di 69,99 €</div>
-        <div style="font-size: 15px"><span data-posti-testo>Solo 300 posti.</span> Accesso alla beta entro il 25 ottobre 2026. Se non ti convince, entro 14 giorni ti rimborsiamo tutto, senza domande.</div>
+        <div style="font-size: 15px"><span data-posti-testo>Solo 300 posti.</span> La beta è aperta: entri subito. Se non ti convince, entro 14 giorni ti rimborsiamo tutto, senza domande.</div>
       </div>
       <a href="https://buy.stripe.com/test_cNi4gB9lCbTg4mr0WC6kg00" style="background: #10231F; color: #FFFFFF; text-decoration: none; padding: 15px 24px; border-radius: 12px; font-weight: 600; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Diventa fondatore – 49,99 €</a>
+    </div>
+  </section>
+
+  <!-- BETA APERTA: codice per i primi 50 -->
+  <section id="beta" hidden style="background: #0E5A4D; color: #FFFFFF; padding: 22px 0">
+    <div class="wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 16px 24px; flex-wrap: wrap">
+      <div style="max-width: 46em; display: grid; gap: 4px">
+        <div style="font-weight: 700; font-size: 19px">Beta aperta: per i primi 50 tester Avanzo Plus a vita è gratis</div>
+        <div style="font-size: 15px; color: #CFE3DB">Entra con la tua email e inserisci il codice <b style="font-family: 'IBM Plex Mono', monospace; color: #F2C14E; letter-spacing: .06em">BETA50</b> in Impostazioni. <span data-codice-posti></span> In cambio ti chiediamo solo un parere sincero dopo due settimane.</div>
+      </div>
+      <a href="#accedi" data-accedi style="background: #F2C14E; color: #10231F; text-decoration: none; padding: 14px 22px; border-radius: 12px; font-weight: 600; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Entra e usa il codice</a>
     </div>
   </section>
 
@@ -409,6 +420,13 @@ a{color:#0E5A4D}a:hover{color:#08362E}
     if (typeof n !== 'number') return;
     document.querySelectorAll('[data-posti-badge]').forEach((el) => { el.textContent = n > 0 ? `Restano ${n} posti su 300` : 'Posti esauriti'; });
     document.querySelectorAll('[data-posti-testo]').forEach((el) => { el.textContent = n > 0 ? `Restano ${n} posti su 300.` : 'I 300 posti fondatore sono esauriti.'; });
+  }).catch(() => {});
+  // codice beta: la fascia compare solo se ci sono ancora posti
+  api('rpc/posti_codice', { p_codice: 'BETA50' }).then((r) => r.ok ? r.json() : null).then((n) => {
+    if (typeof n !== 'number' || n <= 0) return;
+    const b = document.getElementById('beta'); if (!b) return;
+    b.querySelector('[data-codice-posti]').textContent = n === 1 ? "Resta l'ultimo posto." : `Restano ${n} posti.`;
+    b.hidden = false;
   }).catch(() => {});
   // lista d'attesa Famiglia
   const f = document.getElementById('famForm'); if (!f) return;

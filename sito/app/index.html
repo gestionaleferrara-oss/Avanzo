@@ -1143,17 +1143,32 @@ const MS = (() => {
       <p class="note">Collegato come <b>${esc(Sync.user.email || '')}</b>. Plus non è ancora attivo su questo account: per ora vedi la demo.</p>
       <p style="margin:0 0 12px">Con il prezzo fondatore hai Avanzo Plus per sempre con un solo pagamento: <b>49,99 €</b> invece di 69,99 €. Al pagamento usa questa stessa email.</p>
       <div class="controls" style="margin:0">${paga ? `<a class="btn" href="${esc(paga)}" target="_blank" rel="noopener">Diventa fondatore – 49,99 €</a>` : ''}<button class="btn ghost" id="acCheck">Ho già pagato, ricontrolla</button></div>
+      <div class="controls" style="margin:14px 0 0"><label class="f" for="acCodice" style="flex:2 1 12rem">Hai un codice beta?<input id="acCodice" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="BETA50"></label><button class="btn ghost" id="acRiscatta">Usa il codice</button></div>
       <p class="hint" id="acErr" role="alert"></p></div>`;
     return `<div class="card" id="accountCard" style="margin-bottom:14px"><h2>Accedi ad Avanzo</h2><p class="note">Entra con la tua email per usare Avanzo con i tuoi conti, su tutti i tuoi dispositivi. Serve Plus. Ti mandiamo un codice, nessuna password.</p>
       <div class="controls" style="margin:0">${Sync.emailInviata
         ? `<p class="note" style="flex:1 1 100%;margin:0">Ti abbiamo scritto a <b>${esc(Sync.emailInviata)}</b>: tocca il link nell'email oppure scrivi qui il codice, se c'è.</p><label class="f" for="acCode">Codice<input id="acCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></label><button class="btn" id="acVerify">Accedi</button><button class="btn ghost" id="acBack">Cambia email</button>`
         : `<label class="f" for="acEmail" style="flex:2 1 14rem">Email<input id="acEmail" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></label><button class="btn" id="acSend">Inviami il codice</button>`}</div>
-      <p class="hint" id="acErr" role="alert"></p>${paga ? `<p class="note" style="margin:8px 0 0">Non hai ancora Plus? <a href="${esc(paga)}" target="_blank" rel="noopener">Diventa fondatore a 49,99 €</a>, poi entra con la stessa email.</p>` : ''}</div>`;
+      <p class="hint" id="acErr" role="alert"></p>${paga ? `<p class="note" style="margin:8px 0 0">Non hai ancora Plus? <a href="${esc(paga)}" target="_blank" rel="noopener">Diventa fondatore a 49,99 €</a>, poi entra con la stessa email. Hai un codice beta? Entra e lo inserisci al passo dopo.</p>` : ''}</div>`;
   };
   after.account = () => {
     if (!SB) return;
     const err = (m) => { const e = document.getElementById('acErr'); if (e) e.textContent = m; };
     const out = document.getElementById('acOut'); if (out) out.onclick = uscita;
+    const ris = document.getElementById('acRiscatta');
+    if (ris) ris.onclick = async () => {
+      const codice = ($('acCodice') ? $('acCodice').value : '').trim().toUpperCase();
+      if (!codice) return err('Scrivi il codice, per esempio BETA50.');
+      ris.disabled = true; err('');
+      let esito = 'errore';
+      try { const { data, error } = await SB.rpc('riscatta_codice', { p_codice: codice }); if (!error) esito = data; } catch (e) {}
+      ris.disabled = false;
+      const msg = { non_valido: 'Questo codice non esiste o non è più attivo. Controlla di averlo scritto bene.', esaurito: 'I posti di questo codice sono finiti. Puoi ancora diventare fondatore a 49,99 €.', gia_plus: 'Hai già Plus su questo account.', accedi: 'Entra con la tua email prima di usare il codice.', errore: 'Non siamo riusciti a usare il codice. Riprova tra poco.' };
+      if (esito !== 'ok' && esito !== 'gia_plus') return err(msg[esito] || msg.errore);
+      let ok = false; try { ok = await leggiPiano(); } catch (e) {}
+      if (!ok) return err('Codice accettato: Plus si attiva tra qualche secondo. Premi "Ho già pagato, ricontrolla".');
+      await avviaSync(); render(); toast('Benvenuto nella beta: Avanzo Plus è attivo sul tuo account.');
+    };
     const chk = document.getElementById('acCheck');
     if (chk) chk.onclick = async () => {
       chk.disabled = true; err('');
